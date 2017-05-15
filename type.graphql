@@ -1,0 +1,103 @@
+# @module: relay
+# @module: jwt
+
+# User type
+type User implements Node {
+
+  # the ! means that every User object _must_ have an id
+  # id: Int! @field
+
+  # Name of the user
+  name: String @field @deprecation(reason: "Name of the user")
+
+  # Email address of the user
+  email: String @validation(
+    minLength: 5, 
+    unique: true
+  ) 
+
+  @deprecation(reason: "What is email?")
+  @deprecation(reason: "What is email?")
+
+  # Height of User
+  height(unit: Unit): Int @field
+
+  newTodo(todos: [Todo]): [Todo] @mutation
+}
+
+# input SignupInput {
+#   username: String!
+#   password: String!
+#   email: Email
+# }
+#
+# scalar Email
+#
+enum Unit {
+    # Shit system
+    FOOT
+    # Metric system
+    METERS
+}
+
+
+type Todo {
+  id: Int!
+  text: String
+  done: Boolean
+  owner: User
+}
+
+type Query {
+  todos: [Todo]
+  todo(
+    # Require id
+    id: Int!,
+    # User name
+    name: [String]
+  ): Todo
+  users: [User]
+  user(id: Int!): User
+}
+
+query Hero($episode: Episode, $withFriends: Boolean!) {
+  hero(episode: $episode) {
+    name
+    friends @include(if: $withFriends) {
+      name
+    }
+  }
+}
+#
+# enum Episode {
+#   NEWHOPE
+#   EMPIRE
+#   JEDI
+# }
+
+# type Query {
+#   posts: [Post]
+#   author(id: Int!, name: String): Author # author query must receive an id as argument
+# }
+
+# union SearchResult = Human | Droid | Starship
+# type Test {
+#   id: Int! # the ! means that every author object _must_ have an id
+#   firstName: String
+#   lastName: Dritt 
+#   posts: [Post] # the list of Posts by this author
+# }
+# # var author = graphql.NewObject(graphql.ObjectConfig{
+# 	Name: "Author",
+# 	Fields: graphql.Fields{
+# 		"id": &graphql.Field{
+# 			Type: graphql.NewNonNull(graphql.Int),
+# 		},
+# 		"firstName": &graphql.Field{
+# 			Type: graphql.String,
+# 		},
+# 		"lastName": &graphql.Field{
+# 			Type: graphql.String,
+# 		},
+# 	},
+# }

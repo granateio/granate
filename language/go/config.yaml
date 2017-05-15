@@ -1,0 +1,12 @@
+config:
+  pkg: "graphql"
+  import: "github.com/graphql-go/graphql"
+  splitFieldsOn:
+    - Query
+    - Mutation
+    - Subscription
+formatter:
+  cmd: "gofmt"
+  args:
+    - "-w"
+    - "{{output}}"

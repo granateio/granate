@@ -1,0 +1,86 @@
+<!-- Definitions -->
+{{define "ObjectDefinition" -}}
+var {{.Name.Value}}Type = {{cfg.Pkg}}.NewObject({{cfg.Pkg}}.ObjectConfig{
+    Name: "{{.Name.Value}}",
+    {{with $doc := . | docs -}}
+    Description: "{{$doc}}",
+    {{end -}}
+    {{with $fd := .Fields -}}
+    Fields:{ 
+        {{ range $fd }}
+        "{{.Name.Value}}": &{{cfg.Pkg}}.Fields{
+            Type: {{.Type | type}},
+            {{with $doc := . | docs -}}
+            Description: "{{$doc}}",
+            {{end -}}
+            {{with $args := .Arguments -}}
+            Args: {
+                {{ range $args -}}
+                "{{.Name.Value}}": &{{cfg.Pkg}}.ArgumentConfig{
+                    Type: {{.Type | type}},
+                    {{with $doc := . | docs -}}
+                    Description: "{{$doc}}",
+                    {{end -}}
+                },
+                {{end}}
+            },
+            {{end -}}
+            Resolve: func(params {{cfg.Pkg}}.ResolveParams) (interface{}, error) {
+                {{with $args := .Arguments -}}
+                {{range $args -}}
+                {{.Name.Value}}Arg, _ := params.Args["{{.Name.Value}}"].({{.Type}})
+                {{end}}
+                {{end}}
+            },
+        },
+        {{end}}
+    },
+    {{end}}
+})
+
+{{end}}
+
+{{define "FieldDefinition" -}}
+{{- end}}
+
+<!-- {{define "FieldConfigArgument" -}} -->
+<!-- {{- end}} -->
+
+{{define "EnumDefinition" -}}
+var {{.Name.Value}}Enum = {{cfg.Pkg}}.NewEnum({{cfg.Pkg}}.EnumConfig{
+    Name: "{{.Name.Value}}",
+    Values: graphql.EnumValueConfigMap{
+        {{template "EnumValueDefinition" .Values}}
+    },
+})
+
+{{end}}
+
+{{define "EnumValueDefinition" -}}
+{{range $i, $e := . -}}
+"{{.Name.Value}}": &{{cfg.Pkg}}.EnumValueConfig{
+    Value: {{$i}},
+},
+{{end}}
+{{end}}
+
+<!-- UnionDefinition: | -->
+  
+
+<!-- Types -->
+{{define "NonNull" -}}
+{{cfg.Pkg}}.NewNonNull({{.Type | type}})
+{{- end}}
+
+{{define "List" -}}
+{{cfg.Pkg}}.NewList({{.Type | type}})
+{{- end}}
+
+{{define "Named" -}}
+{{cfg.Pkg}}.{{.Value}}
+{{- end}}
+
+{{define "OperationDefinition"}}
+query
+{{end}}
+
