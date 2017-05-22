@@ -40,11 +40,14 @@ var {{.Name.Value}}Type = {{cfg.Pkg}}.NewObject({{cfg.Pkg}}.ObjectConfig{
             },
             {{end -}}
             Resolve: func(params {{cfg.Pkg}}.ResolveParams) (interface{}, error) {
-                {{with $args := .Arguments -}}
-                {{range $args -}}
+                {{range $args := .Arguments -}}
                 {{.Name.Value}}Arg, _ := params.Args["{{.Name.Value}}"].({{.Type}})
                 {{end}}
-                {{end}}
+                return Provider.{{$.Name.Value}}.{{.Name.Value | public}}(
+                {{- range $i, $args := .Arguments -}}
+                {{if $i}}, {{end}}{{.Name.Value}}Arg
+                {{- end -}}
+                )
             },
         },
         {{end}}
