@@ -3,6 +3,7 @@ package lib
 import (
 	"bytes"
 	"html/template"
+	"strings"
 
 	"github.com/graphql-go/graphql/language/ast"
 )
@@ -16,10 +17,15 @@ func NewGQLTmplFuncs(tmpl *template.Template) template.FuncMap {
 		Template: tmpl,
 	}
 	return template.FuncMap{
-		"body": tmplFunc.GetBody,
-		"type": tmplFunc.GetType,
-		"docs": tmplFunc.GetDocs,
+		"body":   tmplFunc.GetBody,
+		"type":   tmplFunc.GetType,
+		"docs":   tmplFunc.GetDocs,
+		"public": tmplFunc.Public,
 	}
+}
+
+func (tmpl GQLTmplFuncs) Public(name string) string {
+	return strings.Title(name)
 }
 
 func (tmpl GQLTmplFuncs) GetBody(n ast.Node) string {
