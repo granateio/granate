@@ -1,5 +1,19 @@
 <!-- Definitions -->
 {{define "ObjectDefinition" -}}
+type {{.Name.Value}}TypeInterface interface{
+    {{range $fields := .Fields -}}
+    {{with $doc := . | docs -}}
+    // {{$doc}}
+    {{end -}}
+    {{.Name.Value | public}}(
+        {{- range $i, $args := .Arguments -}}
+        {{if $i}}, {{end}}{{- .Type -}}
+        {{- end -}}
+    ) (interface{}, error)
+
+    {{end}}
+}
+
 var {{.Name.Value}}Type = {{cfg.Pkg}}.NewObject({{cfg.Pkg}}.ObjectConfig{
     Name: "{{.Name.Value}}",
     {{with $doc := . | docs -}}
