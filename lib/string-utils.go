@@ -33,20 +33,21 @@ func FindLine(src []byte, start int) Line {
 	}
 }
 
-func FindCommentBlock(src []byte, start int) string {
+func FindCommentBlock(src []byte, start int) []string {
 	// TODO(nohack) Add support for multiline comments
 	// TODO: Make the empty line gap a maximum of 1-2 lines
 
 	pos := start
 	gap := 0
-	block := ""
+	var comments []string
 
 	for {
 		line := FindLine(src, pos)
 		trimLine := strings.TrimSpace(line.Text)
 
-		if strings.HasPrefix(trimLine, "#") {
-			block = strings.TrimLeft(trimLine, "# ") + block
+		if strings.HasPrefix(trimLine, "# - ") {
+			block := strings.TrimLeft(trimLine, "# - ")
+			comments = append([]string{block}, comments...)
 			// fmt.Println(block)
 		} else if len(trimLine) > 0 {
 			if gap > 0 {
@@ -60,5 +61,5 @@ func FindCommentBlock(src []byte, start int) string {
 		}
 	}
 
-	return block
+	return comments
 }

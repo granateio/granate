@@ -1,0 +1,45 @@
+# This is an exmaple schema file used to test the code generator. The content
+# of this file is meant to reflect the current state/capabilities of the code
+# generator, so if a definition is missing from this file, it's probably not
+# supported yet.
+
+# - A user in the system
+type User {
+    id: ID
+    name: String
+    todos: [Todo]
+}
+
+# - A todo
+type Todo {
+    id: ID
+    title: String
+    description: String
+    status: TodoStatus
+}
+
+enum TodoStatus {
+    COMPLETED
+    ACTIVE
+    IGNORED
+    PAUSED
+}
+
+type Query {
+    # - Get the current loged in user
+    # - Returns null if no user is loged in
+    viewer: User
+}
+
+type Mutation {
+    createTodos(user: ID!, todos: [TodoInput]!): [Todo]
+    changeTodoStatus(todo: ID!, status: TodoStatus!): Todo
+}
+
+input TodoInput {
+    # - Tile of the new todo
+    title: String!
+    # - Description of the new todo
+    # - This is optional
+    description: String
+}
