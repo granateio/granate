@@ -55,12 +55,6 @@ func NewGenerator(schemaFile string) (*Generator, error) {
 	return gen, nil
 }
 
-type NodeInfo struct {
-	Name string
-	Type string
-	Node *ast.Node
-}
-
 type NamedDefinition interface {
 	GetName() *ast.Name
 	GetKind() string
