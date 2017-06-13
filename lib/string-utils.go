@@ -2,12 +2,15 @@ package lib
 
 import "strings"
 
+// Line represents a line of text
 type Line struct {
 	Text  string
 	Start int
 	End   int
 }
 
+// FindLine takes a byte array and a start position
+// returns a line
 func FindLine(src []byte, start int) Line {
 	var lineStart, lineEnd int
 	l := len(src)
@@ -33,6 +36,8 @@ func FindLine(src []byte, start int) Line {
 	}
 }
 
+// FindCommentBlock takes a byte array and a start position
+// and may return a comment block if it finds one
 func FindCommentBlock(src []byte, start int) []string {
 	// TODO(nohack) Add support for multiline comments
 	// TODO: Make the empty line gap a maximum of 1-2 lines

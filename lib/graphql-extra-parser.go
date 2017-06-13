@@ -7,6 +7,7 @@ import (
 	"github.com/graphql-go/graphql/language/kinds"
 )
 
+// ParseType Convert a schema type to a ast.Type
 func ParseType(t string, loc *ast.Location) ast.Type {
 	// fmt.Println("ParseType", t)
 

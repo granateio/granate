@@ -1,8 +1,12 @@
 package main
 
-import flags "github.com/jessevdk/go-flags"
+import (
+	"os"
 
-// Code generator options
+	flags "github.com/jessevdk/go-flags"
+)
+
+// GenOpts Code generator options
 type GenOpts struct {
 	Config flags.Filename `short:"c" long:"config" description:"Path to graphql.yaml file"`
 
@@ -11,6 +15,7 @@ type GenOpts struct {
 	Tests bool `short:"t" long:"tests" description:"Generate tests"`
 }
 
+// BoilerOpts Boilerplate options
 type BoilerOpts struct {
 	Force bool `short:"f" long:"force" description:"Force overwrite of existing files"`
 }
@@ -49,6 +54,8 @@ func main() {
 	// flags.Parse(&opt)
 	// spew.Dump(opt)
 
-	gen, _ := NewGenerator("./todo.graphql")
-	gen.Generate()
+	file := os.Args[1]
+
+	gen, _ := newGenerator(file)
+	gen.generate()
 }

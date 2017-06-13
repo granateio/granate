@@ -11,20 +11,20 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 )
 
-func (gen *Generator) FuncMap() template.FuncMap {
+func (gen *generator) funcMap() template.FuncMap {
 	return template.FuncMap{
-		"def2native":  gen.Def2Native,
-		"def2graphql": gen.Def2Graphql,
-		"desc":        gen.Description,
-		"cfg":         gen.GetConfig,
-		"public":      gen.Public,
-		"body":        gen.GetBody,
-		"core":        gen.Core,
+		"def2native":  gen.def2Native,
+		"def2graphql": gen.def2Graphql,
+		"desc":        gen.description,
+		"cfg":         gen.getConfig,
+		"public":      gen.public,
+		"body":        gen.getBody,
+		"core":        gen.core,
 	}
 }
 
 // TODO: Load core functions from language config
-func (gen *Generator) Core(name string) bool {
+func (gen *generator) core(name string) bool {
 	switch name {
 	case
 		"Query",
@@ -35,7 +35,7 @@ func (gen *Generator) Core(name string) bool {
 	return false
 }
 
-func (gen *Generator) Definition(name string) string {
+func (gen *generator) definition(name string) string {
 	var output bytes.Buffer
 	gen.Template.ExecuteTemplate(
 		&output, "Graphql"+gen.NamedLookup(name), map[string]string{
@@ -44,15 +44,15 @@ func (gen *Generator) Definition(name string) string {
 	return output.String()
 }
 
-func (gen *Generator) GetConfig() interface{} {
+func (gen *generator) getConfig() interface{} {
 	return gen.Config
 }
 
-func (gen Generator) Public(name string) string {
+func (gen generator) public(name string) string {
 	return strings.Title(name)
 }
 
-func (gen Generator) GetBody(n ast.Node) string {
+func (gen generator) getBody(n ast.Node) string {
 	body := n.GetLoc().Source.Body
 	return string(body[n.GetLoc().Start:n.GetLoc().End])
 }
@@ -80,30 +80,30 @@ func namedGraphqlType(name string) bool {
 	return false
 }
 
-func (gen Generator) Description(n ast.Node) []string {
+func (gen generator) description(n ast.Node) []string {
 	return lib.FindCommentBlock(n.GetLoc().Source.Body, n.GetLoc().Start)
 }
 
 // TODO: Discuss naming conventions for:
 //	Def2Native, Def2Graphql and Def2Type
 
-func (gen *Generator) Def2Native(def interface{}) string {
-	return gen.Def2Type(TypeNative, def)
+func (gen *generator) def2Native(def interface{}) string {
+	return gen.def2Type(typeNative, def)
 }
 
-func (gen *Generator) Def2Graphql(def interface{}) string {
-	return gen.Def2Type(TypeGraphql, def)
+func (gen *generator) def2Graphql(def interface{}) string {
+	return gen.def2Type(typeGraphql, def)
 }
 
-func (gen *Generator) Def2Type(set TypeSet, def interface{}) string {
+func (gen *generator) def2Type(set typeSet, def interface{}) string {
 	switch t := def.(type) {
 	case *ast.Name:
-		return gen.GetType(set, &ast.Named{
+		return gen.getType(set, &ast.Named{
 			Kind: kinds.Named,
 			Loc:  t.GetLoc(),
 		})
 	case ast.Type:
-		return gen.GetType(set, t)
+		return gen.getType(set, t)
 	}
 
 	// TODO: Improve error message
@@ -111,15 +111,15 @@ func (gen *Generator) Def2Type(set TypeSet, def interface{}) string {
 	return ""
 }
 
-type TypeSet string
+type typeSet string
 
 const (
-	TypeNative  TypeSet = "Native"
-	TypeGraphql TypeSet = "Graphql"
+	typeNative  typeSet = "Native"
+	typeGraphql typeSet = "Graphql"
 )
 
 // TODO: Refactor/improve this method
-func (gen *Generator) GetType(typeset TypeSet, t ast.Type) string {
+func (gen *generator) getType(typeset typeSet, t ast.Type) string {
 	set := string(typeset)
 	switch v := t.(type) {
 	case *ast.Named:
@@ -141,7 +141,7 @@ func (gen *Generator) GetType(typeset TypeSet, t ast.Type) string {
 		l := v.Loc
 		val := string(l.Source.Body[l.Start : l.End-1])
 		newLoc := ast.NewLocation(l)
-		newLoc.End -= 1
+		newLoc.End--
 		innerType := lib.ParseType(val, newLoc)
 
 		gen.Template.ExecuteTemplate(&output, set+"NonNull", map[string]ast.Type{
@@ -154,8 +154,8 @@ func (gen *Generator) GetType(typeset TypeSet, t ast.Type) string {
 		val := string(l.Source.Body[l.Start+1 : l.End-1])
 		newLoc := ast.NewLocation(l)
 
-		newLoc.End -= 1
-		newLoc.Start += 1
+		newLoc.End--
+		newLoc.Start++
 
 		newType := lib.ParseType(val, newLoc)
 

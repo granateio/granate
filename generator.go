@@ -12,20 +12,20 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 )
 
-type Generator struct {
+type generator struct {
 	Code     string
 	Schema   string
 	Template *template.Template
 	Ast      *ast.Document
-	Config   GenConfig
+	Config   genConfig
 }
 
-type GenConfig struct {
+type genConfig struct {
 	Pkg        string
 	ImportPath string
 }
 
-func NewGenerator(schemaFile string) (*Generator, error) {
+func newGenerator(schemaFile string) (*generator, error) {
 	file, err := ioutil.ReadFile(schemaFile)
 	check(err)
 
@@ -40,31 +40,31 @@ func NewGenerator(schemaFile string) (*Generator, error) {
 
 	check(err)
 
-	gen := &Generator{
+	gen := &generator{
 		Schema: string(file),
 		Ast:    AST,
-		Config: GenConfig{
+		Config: genConfig{
 			Pkg:        "graphql",
 			ImportPath: "github.com/graphql-go/graphql",
 		},
 	}
 
-	gen.Template, err = template.New("main").Funcs(gen.FuncMap()).ParseGlob("language/go/*.tmpl")
+	gen.Template, err = template.New("main").Funcs(gen.funcMap()).ParseGlob("language/go/*.tmpl")
 	check(err)
 
 	return gen, nil
 }
 
-type NamedDefinition interface {
+type namedDefinition interface {
 	GetName() *ast.Name
 	GetKind() string
 }
 
-func (gen *Generator) NamedLookup(name string) string {
+func (gen *generator) NamedLookup(name string) string {
 	nodes := gen.Ast.Definitions
 
 	for _, node := range nodes {
-		named, ok := node.(NamedDefinition)
+		named, ok := node.(namedDefinition)
 		if ok == false {
 			continue
 		}
@@ -77,23 +77,23 @@ func (gen *Generator) NamedLookup(name string) string {
 	return ""
 }
 
-type GeneratorPass struct {
+type generatorPass struct {
 	Name string
 	File string
 }
 
-var passes = []GeneratorPass{
-	GeneratorPass{
+var passes = []generatorPass{
+	generatorPass{
 		Name: "Def",
 		File: "definitions.go",
 	},
-	GeneratorPass{
+	generatorPass{
 		Name: "Adp",
 		File: "adapters.go",
 	},
 }
 
-func (gen *Generator) Generate() {
+func (gen *generator) generate() {
 	nodes := gen.Ast.Definitions
 	tmpl := gen.Template
 
