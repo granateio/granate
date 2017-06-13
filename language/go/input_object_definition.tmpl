@@ -1,0 +1,38 @@
+{{define "Adp_InputObjectDefinition" -}}
+type {{ .Name | def2native }} struct{
+    {{- range $fields := .Fields}}
+    {{range $desc := . | desc -}}
+    // {{ $desc }}
+    {{end -}}
+    {{.Name.Value | public}} {{.Type | def2native}}
+    {{end}}
+}
+
+{{end}}
+
+{{define "Def_InputObjectDefinition" -}}
+var {{ .Name | def2graphql }} = {{cfg.Pkg}}.NewInputObject({{cfg.Pkg}}.InputObjectConfig{
+    Name: "{{ .Name.Value }}",
+    {{with $desc := . | desc -}}
+    Description: {{template "Description" $desc}}
+    {{end -}}
+    Fields: {{cfg.Pkg}}.InputObjectFieldMap {
+        {{range $fields := .Fields}}
+        "{{.Name.Value}}":  &{{cfg.Pkg}}.InputObjectFieldConfig{
+            Type: {{.Type | def2graphql}},
+            {{with $desc := . | desc -}}
+            Description: {{template "Description" $desc}}
+            {{end -}}
+        },
+        {{end}}
+    },
+})
+{{end}}
+
+{{define "NativeInputObjectDefinition" -}}
+{{ .Name }}Struct
+{{- end}}
+
+{{define "GraphqlInputObjectDefinition" -}}
+{{ .Name }}Definition
+{{- end}}

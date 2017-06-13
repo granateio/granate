@@ -77,17 +77,36 @@ func (gen *Generator) NamedLookup(name string) string {
 	return ""
 }
 
+type GeneratorPass struct {
+	Name string
+	File string
+}
+
+var passes = []GeneratorPass{
+	GeneratorPass{
+		Name: "Def",
+		File: "definitions.go",
+	},
+	GeneratorPass{
+		Name: "Adp",
+		File: "adapters.go",
+	},
+}
+
 func (gen *Generator) Generate() {
 	nodes := gen.Ast.Definitions
 	tmpl := gen.Template
 
-	var code bytes.Buffer
-
-	for k, n := range nodes {
-		var _ = k
-		err := tmpl.ExecuteTemplate(&code, n.GetKind(), n)
-		check(err)
+	for _, pass := range passes {
+		var code bytes.Buffer
+		err := tmpl.ExecuteTemplate(&code, "Header", nil)
+		_ = err
+		for _, n := range nodes {
+			err := tmpl.ExecuteTemplate(&code, pass.Name+"_"+n.GetKind(), n)
+			_ = err
+			// check(err)
+		}
+		fmt.Println(code.String())
 	}
 
-	fmt.Println(code.String())
 }

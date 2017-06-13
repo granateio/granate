@@ -19,7 +19,20 @@ func (gen *Generator) FuncMap() template.FuncMap {
 		"cfg":         gen.GetConfig,
 		"public":      gen.Public,
 		"body":        gen.GetBody,
+		"core":        gen.Core,
 	}
+}
+
+// TODO: Load core functions from language config
+func (gen *Generator) Core(name string) bool {
+	switch name {
+	case
+		"Query",
+		"Mutation",
+		"Subscription":
+		return true
+	}
+	return false
 }
 
 func (gen *Generator) Definition(name string) string {

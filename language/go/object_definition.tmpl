@@ -1,0 +1,80 @@
+{{define "Adp_ObjectDefinition" -}}
+{{range $desc := . | desc -}}
+// {{.}}
+{{end -}}
+type {{.Name | def2native}} interface{
+    {{range $fields := .Fields -}}
+    {{range $desc := . | desc -}}
+    // {{.}}
+    {{end -}}
+    {{.Name.Value | public}}Field(
+        {{- range $i, $args := .Arguments -}}
+        {{if $i}}, {{end}}{{- .Type | def2native -}}
+        {{- end -}}
+    ) ({{.Type | def2native}}, error)
+
+    {{end}}
+}
+
+{{end}}
+
+{{define "Def_ObjectDefinition" -}}
+var {{ .Name | def2graphql }} = {{cfg.Pkg}}.NewObject({{cfg.Pkg}}.ObjectConfig{
+    Name: "{{.Name.Value}}",
+    {{with $desc := . | desc -}}
+    Description: {{template "Description" $desc}}
+    {{end -}}
+    {{with $fd := .Fields -}}
+    Fields: &{{cfg.Pkg}}.Fields{ 
+        {{ range $fd }}
+        "{{.Name.Value}}": &{{cfg.Pkg}}.Field{
+            Type: {{.Type | def2graphql}},
+            {{with $desc := . | desc -}}
+            Description: {{template "Description" $desc}}
+            {{end -}}
+            {{with $args := .Arguments -}}
+            Args: &{{cfg.Pkg}}.FieldConfigArgument{
+                {{ range $args -}}
+                "{{.Name.Value}}": &{{cfg.Pkg}}.ArgumentConfig{
+                    Type: {{.Type | def2graphql}},
+                    {{with $desc := . | desc -}}
+                    Description: {{template "Description" $desc}}
+                    {{end -}}
+                },
+                {{end}}
+            },
+            {{end -}}
+            Resolve: func(params {{cfg.Pkg}}.ResolveParams) (interface{}, error) {
+                {{ range $args := .Arguments -}}
+                var {{.Name.Value}}Arg {{.Type | def2native}}
+                mapstructure.Decode(params.Args["{{.Name.Value}}"], &{{.Name.Value}}Arg)
+                {{/*
+                {{.Name.Value}}Arg, _ := params.Args["{{.Name.Value}}"].({{.Type | def2native}})
+                */}}
+                {{end}}
+                {{if $.Name.Value | core}}
+                    return Provider.{{$.Name.Value}}.{{.Name.Value | public}}Field(
+                {{- else -}}
+                {{$.Name.Value}}Source, _ := params.Source.({{$.Name | def2native}})
+                return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(
+                {{end}}
+                {{- range $i, $args := .Arguments -}}
+                {{if $i}}, {{end}}{{.Name.Value}}Arg
+                {{- end -}}
+                )
+            },
+        },
+        {{end}}
+    },
+    {{end}}
+})
+
+{{end}}
+
+{{define "NativeObjectDefinition" -}}
+{{ .Name }}Interface
+{{- end}}
+
+{{define "GraphqlObjectDefinition" -}}
+{{ .Name }}Definition
+{{- end}}

@@ -1,0 +1,23 @@
+{{define "NativeNamed" -}}
+{{ .Name }}
+{{- end}}
+
+{{define "GraphqlNamed" -}}
+{{cfg.Pkg}}.{{.Name}}
+{{- end}}
+
+{{define "GraphqlNonNull" -}}
+{{cfg.Pkg}}.NewNonNull({{.Type | def2graphql}})
+{{- end}}
+
+{{define "NativeNonNull" -}}
+{{ .Type | def2native}}
+{{- end}}
+
+{{define "GraphqlList" -}}
+{{cfg.Pkg}}.NewList({{.Type | def2graphql}})
+{{- end}}
+
+{{define "NativeList" -}}
+[]{{ .Type | def2native}}
+{{- end}}
