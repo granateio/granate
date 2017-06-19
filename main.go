@@ -54,7 +54,13 @@ func main() {
 	// flags.Parse(&opt)
 	// spew.Dump(opt)
 
-	file := os.Args[1]
+	// TODO: Add program paramaters/flags and stuff
+	file := "graphql.yaml"
+
+	if len(os.Args) > 1 {
+		file = os.Args[1]
+		// log.Fatal("Not enought arguments")
+	}
 
 	gen, _ := newGenerator(file)
 	gen.generate()

@@ -6,7 +6,11 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
+	"os"
 
+	yaml "gopkg.in/yaml.v2"
+
+	"github.com/davecgh/go-spew/spew"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
@@ -17,20 +21,52 @@ type generator struct {
 	Schema   string
 	Template *template.Template
 	Ast      *ast.Document
-	Config   genConfig
+	Generate generatorConfig
+	// TODO: Remove Config issue: #1
+	Config genConfig
 }
 
+// TODO genConfig and generatorConfig got to similar names
 type genConfig struct {
 	Pkg        string
 	ImportPath string
 }
 
-func newGenerator(schemaFile string) (*generator, error) {
-	file, err := ioutil.ReadFile(schemaFile)
+type generatorConfig struct {
+	// TODO Support a globbing system
+	Schemas  []string
+	Language string
+	Package  string
+}
+
+// func newGenerator(schemaFile string) (*generator, error) {
+func newGenerator(config string) (*generator, error) {
+
+	confFile, err := ioutil.ReadFile(config)
 	check(err)
 
+	genCfg := generatorConfig{}
+	err = yaml.Unmarshal(confFile, &genCfg)
+	check(err)
+
+	spew.Dump(&genCfg)
+
+	// Combine all .graphql files into one schema
+	var schema bytes.Buffer
+	for _, scm := range genCfg.Schemas {
+		file, err := ioutil.ReadFile(scm)
+		check(err)
+		schema.Write(file)
+	}
+
+	// Create the package directory
+	// Ignore error for now
+	err = os.Mkdir(genCfg.Package, 0766)
+
+	// log.Fatal(schema.String())
+
 	src := source.NewSource(&source.Source{
-		Body: file,
+		Body: schema.Bytes(),
 		Name: "Schema",
 	})
 
@@ -41,15 +77,19 @@ func newGenerator(schemaFile string) (*generator, error) {
 	check(err)
 
 	gen := &generator{
-		Schema: string(file),
+		Schema: schema.String(),
 		Ast:    AST,
 		Config: genConfig{
 			Pkg:        "graphql",
 			ImportPath: "github.com/graphql-go/graphql",
 		},
+		Generate: genCfg,
 	}
 
-	gen.Template, err = template.New("main").Funcs(gen.funcMap()).ParseGlob("language/go/*.tmpl")
+	gen.Template, err = template.New("main").
+		Funcs(gen.funcMap()).
+		ParseGlob("language/go/*.tmpl")
+
 	check(err)
 
 	return gen, nil
@@ -60,6 +100,7 @@ type namedDefinition interface {
 	GetKind() string
 }
 
+// TODO: Find a better name for the NamedLookup function
 func (gen *generator) NamedLookup(name string) string {
 	nodes := gen.Ast.Definitions
 
@@ -82,6 +123,7 @@ type generatorPass struct {
 	File string
 }
 
+// TODO: Should rethink the generator pass system
 var passes = []generatorPass{
 	generatorPass{
 		Name: "Def",
@@ -106,7 +148,12 @@ func (gen *generator) generate() {
 			_ = err
 			// check(err)
 		}
-		fmt.Println(code.String())
+		// Code output
+		filename := gen.Generate.Package + "/" + pass.File
+		fmt.Println(filename)
+		err = ioutil.WriteFile(filename, code.Bytes(), 0644)
+		check(err)
+		// fmt.Println(code.String())
 	}
 
 }
