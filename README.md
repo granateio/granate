@@ -1,4 +1,4 @@
 # !WORK IN PROGRESS!
 
-# go-graphql-codegen
+# graphql-go-gen
 Code generator for graphql-go
