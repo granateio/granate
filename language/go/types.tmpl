@@ -3,7 +3,7 @@
 {{- end}}
 
 {{define "GraphqlNamed" -}}
-{{cfg.Pkg}}.{{.Name}}
+{{cfg.Pkg}}.{{.Name | public}}
 {{- end}}
 
 {{define "GraphqlNonNull" -}}

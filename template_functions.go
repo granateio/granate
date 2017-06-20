@@ -128,6 +128,7 @@ func (gen *generator) getType(typeset typeSet, t ast.Type) string {
 		name := string(l.Source.Body[l.Start:l.End])
 		if namedGraphqlType(name) == true {
 			gen.Template.ExecuteTemplate(&output, set+"Named", map[string]string{
+				// TODO: Fetch the correct name for native and graphql types
 				"Name": typemap[name],
 			})
 			return output.String()
