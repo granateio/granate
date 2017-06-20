@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -123,7 +125,7 @@ type generatorPass struct {
 	File string
 }
 
-// TODO: Should rethink the generator pass system
+// TODO: Should rethink the generator pass system issue: #4
 var passes = []generatorPass{
 	generatorPass{
 		Name: "Def",
@@ -148,12 +150,25 @@ func (gen *generator) generate() {
 			_ = err
 			// check(err)
 		}
+
 		// Code output
 		filename := gen.Generate.Package + "/" + pass.File
 		fmt.Println(filename)
-		err = ioutil.WriteFile(filename, code.Bytes(), 0644)
+
+		// TODO: Read the fmt command from config
+		cmd := exec.Command("gofmt")
+		stdin, err := cmd.StdinPipe()
 		check(err)
-		// fmt.Println(code.String())
+
+		go func() {
+			defer stdin.Close()
+			io.WriteString(stdin, code.String())
+		}()
+
+		out, err := cmd.CombinedOutput()
+		// Format code here
+		err = ioutil.WriteFile(filename, out, 0644)
+		check(err)
 	}
 
 }
