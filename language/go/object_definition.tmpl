@@ -33,7 +33,7 @@ var {{ .Name | def2graphql }} = {{cfg.Pkg}}.NewObject({{cfg.Pkg}}.ObjectConfig{
             Description: {{template "Description" $desc}}
             {{end -}}
             {{with $args := .Arguments -}}
-            Args: &{{cfg.Pkg}}.FieldConfigArgument{
+            Args: {{cfg.Pkg}}.FieldConfigArgument{
                 {{ range $args -}}
                 "{{.Name.Value}}": &{{cfg.Pkg}}.ArgumentConfig{
                     Type: {{.Type | def2graphql}},
