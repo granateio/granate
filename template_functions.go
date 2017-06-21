@@ -6,9 +6,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/base-dev/graphql/language/kinds"
-	"github.com/graphql-go-gen/lib"
+	"github.com/granate/lib"
 	"github.com/graphql-go/graphql/language/ast"
+	"github.com/graphql-go/graphql/language/kinds"
 )
 
 func (gen *generator) funcMap() template.FuncMap {

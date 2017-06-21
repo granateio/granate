@@ -1,6 +1,6 @@
 package main
 
-import "github.com/graphql-go-gen/schema"
+import "github.com/granate/schema"
 
 var _ schema.UserInterface = (*User)(nil)
 

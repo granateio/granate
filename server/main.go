@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/graphql-go-gen/schema"
+	"github.com/granate/schema"
 )
 
 func main() {

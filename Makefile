@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 # The name of the executable (default is current directory name)
 # TARGET := $(shell echo $${PWD\#\#*/})
-TARGET := gographql
+TARGET := granate
 .DEFAULT_GOAL: $(TARGET)
 
 # These will be provided to the target
