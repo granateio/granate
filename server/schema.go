@@ -1,6 +1,11 @@
 package main
 
-import "github.com/granate/schema"
+import (
+	"fmt"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/granate/schema"
+)
 
 var _ schema.UserInterface = (*User)(nil)
 
@@ -50,9 +55,26 @@ func (todo Todo) StatusField() (int, error) {
 var _ schema.QueryInterface = (*Query)(nil)
 
 type Query struct {
-	User User
+	User schema.UserInterface
 }
 
 func (query Query) ViewerField() (schema.UserInterface, error) {
 	return query.User, nil
+}
+
+var _ schema.MutationInterface = (*Mutation)(nil)
+
+type Mutation struct {
+}
+
+func (mut Mutation) CreateTodosField(id string,
+	todos []schema.TodoInputStruct) ([]schema.TodoInterface, error) {
+	spew.Dump(todos)
+	return nil, nil
+}
+
+func (mut Mutation) ChangeTodoStatusField(id string, status int) (
+	schema.TodoInterface, error) {
+	fmt.Printf("User: %s, Status: %d\n", id, status)
+	return Todo{Title: "Dummy"}, nil
 }
