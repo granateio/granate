@@ -16,12 +16,12 @@ var {{ .Name | def2graphql }} = {{cfg.Pkg}}.NewInputObject({{cfg.Pkg}}.InputObje
     {{with $desc := . | desc -}}
     Description: {{template "Description" $desc}}
     {{end -}}
-    Fields: {{cfg.Pkg}}.InputObjectFieldMap {
+    Fields: {{cfg.Pkg}}.InputObjectConfigFieldMap {
         {{range $fields := .Fields}}
-        "{{.Name.Value}}":  &{{cfg.Pkg}}.InputObjectField{
+        "{{.Name.Value}}":  &{{cfg.Pkg}}.InputObjectFieldConfig{
             Type: {{.Type | def2graphql}},
             {{with $desc := . | desc -}}
-            PrivateDescription: {{template "Description" $desc}}
+            Description: {{template "Description" $desc}}
             {{end -}}
         },
         {{end}}
