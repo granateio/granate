@@ -18,6 +18,7 @@ type Todo {
     status: TodoStatus
 }
 
+# - Describes the status of a Todo
 enum TodoStatus {
     COMPLETED
     ACTIVE
@@ -25,17 +26,22 @@ enum TodoStatus {
     PAUSED
 }
 
+# - Root query
 type Query {
     # - Get the current loged in user
     # - Returns null if no user is loged in
     viewer: User
 }
 
+# - Root mutation
 type Mutation {
+    # - Create todos for a user
     createTodos(user: ID!, todos: [TodoInput]!): [Todo]
+    # - Change the todo status for a todo
     changeTodoStatus(todo: ID!, status: TodoStatus!): Todo
 }
 
+# - Input used when creating todos
 input TodoInput {
     # - Tile of the new todo
     title: String!
