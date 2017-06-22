@@ -41,11 +41,9 @@ func FindLine(src []byte, start int) Line {
 	}
 }
 
-// FindCommentBlock takes a byte array and a start position
+// GetCommentBlock takes a byte array and a start position
 // and may return a comment block if it finds one
-func FindCommentBlock(src []byte, start int) []string {
-	// TODO(nohack) Add support for multiline comments
-	// TODO: Make the empty line gap a maximum of 1-2 lines
+func GetCommentBlock(src []byte, start int) []string {
 
 	pos := start
 	gap := 0

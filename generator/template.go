@@ -81,7 +81,7 @@ func namedGraphqlType(name string) bool {
 }
 
 func (gen Generator) description(n ast.Node) []string {
-	return utils.FindCommentBlock(n.GetLoc().Source.Body, n.GetLoc().Start)
+	return utils.GetCommentBlock(n.GetLoc().Source.Body, n.GetLoc().Start)
 }
 
 // TODO: Discuss naming conventions for:
