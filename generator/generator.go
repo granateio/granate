@@ -1,4 +1,4 @@
-package main
+package generator
 
 import (
 	"bytes"
@@ -18,14 +18,15 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 )
 
-type generator struct {
+// Generator represents the code generator main object
+type Generator struct {
 	Code     string
 	Schema   string
 	Template *template.Template
 	Ast      *ast.Document
-	Generate generatorConfig
+	Config   generatorConfig
 	// TODO: Remove Config issue: #1
-	Config genConfig
+	TmplConf genConfig
 }
 
 // TODO genConfig and generatorConfig got to similar names
@@ -41,8 +42,8 @@ type generatorConfig struct {
 	Package  string
 }
 
-// func newGenerator(schemaFile string) (*generator, error) {
-func newGenerator(config string) (*generator, error) {
+// New creates a new Generator instance
+func New(config string) (*Generator, error) {
 
 	confFile, err := ioutil.ReadFile(config)
 	check(err)
@@ -78,14 +79,14 @@ func newGenerator(config string) (*generator, error) {
 
 	check(err)
 
-	gen := &generator{
+	gen := &Generator{
 		Schema: schema.String(),
 		Ast:    AST,
-		Config: genConfig{
+		TmplConf: genConfig{
 			Pkg:        "graphql",
 			ImportPath: "github.com/graphql-go/graphql",
 		},
-		Generate: genCfg,
+		Config: genCfg,
 	}
 
 	gen.Template, err = template.New("main").
@@ -103,7 +104,7 @@ type namedDefinition interface {
 }
 
 // TODO: Find a better name for the NamedLookup function
-func (gen *generator) NamedLookup(name string) string {
+func (gen *Generator) NamedLookup(name string) string {
 	nodes := gen.Ast.Definitions
 
 	for _, node := range nodes {
@@ -137,7 +138,8 @@ var passes = []generatorPass{
 	},
 }
 
-func (gen *generator) generate() {
+// Generate starts the code generation process
+func (gen *Generator) Generate() {
 	nodes := gen.Ast.Definitions
 	tmpl := gen.Template
 
@@ -152,7 +154,7 @@ func (gen *generator) generate() {
 		}
 
 		// Code output
-		filename := gen.Generate.Package + "/" + pass.File
+		filename := gen.Config.Package + "/" + pass.File
 		fmt.Println(filename)
 
 		// TODO: Read the fmt command from config
@@ -171,4 +173,10 @@ func (gen *generator) generate() {
 		check(err)
 	}
 
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
 }

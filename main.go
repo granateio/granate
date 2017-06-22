@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/granate/generator"
 	flags "github.com/jessevdk/go-flags"
 )
 
@@ -62,6 +63,6 @@ func main() {
 		// log.Fatal("Not enought arguments")
 	}
 
-	gen, _ := newGenerator(file)
-	gen.generate()
+	gen, _ := generator.New(file)
+	gen.Generate()
 }

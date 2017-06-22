@@ -1,4 +1,4 @@
-package main
+package generator
 
 import (
 	"bytes"
@@ -6,12 +6,12 @@ import (
 	"log"
 	"strings"
 
-	"github.com/granate/lib"
+	"github.com/granate/generator/utils"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/kinds"
 )
 
-func (gen *generator) funcMap() template.FuncMap {
+func (gen *Generator) funcMap() template.FuncMap {
 	return template.FuncMap{
 		"def2native":  gen.def2Native,
 		"def2graphql": gen.def2Graphql,
@@ -24,7 +24,7 @@ func (gen *generator) funcMap() template.FuncMap {
 }
 
 // TODO: Load core functions from language config
-func (gen *generator) core(name string) bool {
+func (gen *Generator) core(name string) bool {
 	switch name {
 	case
 		"Query",
@@ -35,7 +35,7 @@ func (gen *generator) core(name string) bool {
 	return false
 }
 
-func (gen *generator) definition(name string) string {
+func (gen *Generator) definition(name string) string {
 	var output bytes.Buffer
 	gen.Template.ExecuteTemplate(
 		&output, "Graphql"+gen.NamedLookup(name), map[string]string{
@@ -44,15 +44,15 @@ func (gen *generator) definition(name string) string {
 	return output.String()
 }
 
-func (gen *generator) getConfig() interface{} {
-	return gen.Config
+func (gen *Generator) getConfig() interface{} {
+	return gen.TmplConf
 }
 
-func (gen generator) public(name string) string {
+func (gen Generator) public(name string) string {
 	return strings.Title(name)
 }
 
-func (gen generator) getBody(n ast.Node) string {
+func (gen Generator) getBody(n ast.Node) string {
 	body := n.GetLoc().Source.Body
 	return string(body[n.GetLoc().Start:n.GetLoc().End])
 }
@@ -80,22 +80,22 @@ func namedGraphqlType(name string) bool {
 	return false
 }
 
-func (gen generator) description(n ast.Node) []string {
-	return lib.FindCommentBlock(n.GetLoc().Source.Body, n.GetLoc().Start)
+func (gen Generator) description(n ast.Node) []string {
+	return utils.FindCommentBlock(n.GetLoc().Source.Body, n.GetLoc().Start)
 }
 
 // TODO: Discuss naming conventions for:
 //	Def2Native, Def2Graphql and Def2Type
 
-func (gen *generator) def2Native(def interface{}) string {
+func (gen *Generator) def2Native(def interface{}) string {
 	return gen.def2Type(typeNative, def)
 }
 
-func (gen *generator) def2Graphql(def interface{}) string {
+func (gen *Generator) def2Graphql(def interface{}) string {
 	return gen.def2Type(typeGraphql, def)
 }
 
-func (gen *generator) def2Type(set typeSet, def interface{}) string {
+func (gen *Generator) def2Type(set typeSet, def interface{}) string {
 	switch t := def.(type) {
 	case *ast.Name:
 		return gen.getType(set, &ast.Named{
@@ -119,7 +119,7 @@ const (
 )
 
 // TODO: Refactor/improve this method
-func (gen *generator) getType(typeset typeSet, t ast.Type) string {
+func (gen *Generator) getType(typeset typeSet, t ast.Type) string {
 	set := string(typeset)
 	switch v := t.(type) {
 	case *ast.Named:
@@ -143,7 +143,7 @@ func (gen *generator) getType(typeset typeSet, t ast.Type) string {
 		val := string(l.Source.Body[l.Start : l.End-1])
 		newLoc := ast.NewLocation(l)
 		newLoc.End--
-		innerType := lib.ParseType(val, newLoc)
+		innerType := utils.ParseType(val, newLoc)
 
 		gen.Template.ExecuteTemplate(&output, set+"NonNull", map[string]ast.Type{
 			"Type": innerType,
@@ -158,7 +158,7 @@ func (gen *generator) getType(typeset typeSet, t ast.Type) string {
 		newLoc.End--
 		newLoc.Start++
 
-		newType := lib.ParseType(val, newLoc)
+		newType := utils.ParseType(val, newLoc)
 
 		gen.Template.ExecuteTemplate(&output, set+"List", map[string]ast.Type{
 			"Type": newType,
