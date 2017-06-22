@@ -74,7 +74,6 @@ func GetCommentBlock(src []byte, start int) []string {
 
 // ParseType Convert a schema type to a ast.Type
 func ParseType(t string, loc *ast.Location) ast.Type {
-	// fmt.Println("ParseType", t)
 
 	if strings.HasSuffix(t, "!") {
 		return &ast.NonNull{

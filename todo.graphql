@@ -3,14 +3,14 @@
 # generator, so if a definition is missing from this file, it's probably not
 # supported yet.
 
-# - A user in the system
+# A user in the system
 type User {
     id: ID
     name: String
     todos: [Todo]
 }
 
-# - A todo
+# A todo
 type Todo {
     id: ID
     title: String
@@ -18,7 +18,7 @@ type Todo {
     status: TodoStatus
 }
 
-# - Describes the status of a Todo
+# Describes the status of a Todo
 enum TodoStatus {
     COMPLETED
     ACTIVE
@@ -26,26 +26,30 @@ enum TodoStatus {
     PAUSED
 }
 
-# - Root query
+# Root query
 type Query {
-    # - Get the current loged in user
-    # - Returns null if no user is loged in
+    # Get the current loged in user
+    # Returns null if no user is loged in
     viewer: User
 }
 
-# - Root mutation
+# Root mutation
 type Mutation {
-    # - Create todos for a user
+    # Create todos for a user
     createTodos(user: ID!, todos: [TodoInput]!): [Todo]
-    # - Change the todo status for a todo
-    changeTodoStatus(todo: ID!, status: TodoStatus!): Todo
+    # Change the todo status for a todo
+    changeTodoStatus(
+        # The ID of the user
+        todo: ID!,
+        # The new status of the todo
+        status: TodoStatus!): Todo
 }
 
-# - Input used when creating todos
+# Input used when creating todos
 input TodoInput {
-    # - Tile of the new todo
+    # Tile of the new todo
     title: String!
-    # - Description of the new todo
-    # - This is optional
+    # Description of the new todo
+    # This is optional
     description: String
 }

@@ -62,11 +62,9 @@ func New(config string) (*Generator, error) {
 		schema.Write(file)
 	}
 
-	// Create the package directory
+	// Create the generated package directory
 	// Ignore error for now
 	err = os.Mkdir(genCfg.Package, 0766)
-
-	// log.Fatal(schema.String())
 
 	src := source.NewSource(&source.Source{
 		Body: schema.Bytes(),
