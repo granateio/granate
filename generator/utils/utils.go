@@ -72,20 +72,10 @@ func GetLine(src []byte, index int) (Line, error) {
 
 // GetCommentBlock takes a byte array and a start position
 // and may return a comment block if it finds one
-func GetCommentBlock(src []byte, start int) []string {
+func GetCommentBlock(src []byte, index int) (block []string) {
 
-	pos := start
-	linegap := 0
-	var comments []string
-
-	line, err := GetLine(src, pos)
-	if err != nil {
-		return nil
-	}
-
-	if line.IsStartOfLine(start) == false {
-		return nil
-	}
+	pos := index
+	linegap := false
 
 	for {
 		line, err := GetLine(src, pos)
@@ -93,27 +83,33 @@ func GetCommentBlock(src []byte, start int) []string {
 			break
 		}
 
-		trimLine := strings.TrimSpace(line.Text())
-
-		if strings.HasPrefix(trimLine, "#") {
-			block := strings.TrimSpace(strings.TrimLeft(trimLine, "#"))
-			comments = append([]string{block}, comments...)
-			linegap = 0
+		if line.IsStartOfLine(index) == false && linegap == false {
+			return
 		}
 
-		if linegap > 0 {
+		text := strings.TrimSpace(line.Text())
+
+		if strings.HasPrefix(text, "#") {
+			comment := strings.TrimSpace(strings.TrimLeft(text, "#"))
+
+			// Prepend new data to the comment block
+			block = append([]string{comment}, block...)
+			linegap = false
+		}
+
+		if linegap == true {
 			break
 		}
 
-		pos = (line.Start - 1)
-		linegap++
+		pos = line.Start - 1
+		linegap = true
 
 		if pos <= 0 {
 			break
 		}
 	}
 
-	return comments
+	return block
 }
 
 // ParseType Convert a schema type to a ast.Type
