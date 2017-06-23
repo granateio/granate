@@ -45,34 +45,28 @@ func (line Line) IsStartOfLine(index int) bool {
 
 // GetLine takes a byte array and a start position
 // returns a line
-func GetLine(src []byte, start int) (Line, error) {
-	var lineStart, lineEnd int
+func GetLine(src []byte, index int) (Line, error) {
+	start, end := index, index+1
 	l := len(src)
 
-	// Find the end of the line
-	for i := start; i < l; i++ {
-		if src[i] == '\n' {
-			lineEnd = i
-			break
-		}
+	if index > l {
+		return Line{}, fmt.Errorf("index out of range")
 	}
 
 	// Find the beginning of the line
-	for i := start; i > 0; i-- {
-		if src[i] == '\n' {
-			lineStart = i
-			break
-		}
+	for start > 0 && src[start-1] != '\n' {
+		start--
 	}
 
-	if lineEnd-lineStart == 0 {
-		return Line{}, fmt.Errorf("Empty line")
+	// Find the end of the line
+	for end < l && src[end-1] != '\n' {
+		end++
 	}
 
 	return Line{
 		Source: src,
-		Start:  lineStart,
-		End:    lineEnd,
+		Start:  start,
+		End:    end,
 	}, nil
 }
 
