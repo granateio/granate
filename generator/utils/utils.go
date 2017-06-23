@@ -16,27 +16,25 @@ type Line struct {
 	Source []byte
 }
 
-// Text gets the contents of the line
+// Text returns the contents of the line as a string
 func (line Line) Text() string {
 	return string(line.Source[line.Start:line.End])
 }
 
-// IsStartOfLine returns true if ind is inside the white space between \n and
-// any character
-func (line Line) IsStartOfLine(ind int) bool {
-	start := line.Start
-	if ind < line.Start || ind > line.End {
+// IsStartOfLine returns true if index is inside the white space between
+// the beginning of the line and any non white space character
+func (line Line) IsStartOfLine(index int) bool {
+	pos := line.Start
+	if index < line.Start || index > line.End {
 		return false
 	}
 	for _, c := range line.Text() {
-		// fmt.Printf("Char: %c\n", c)
 		if unicode.IsSpace(rune(c)) == true {
-			start++
+			pos++
 			continue
 		}
 
-		// fmt.Printf("Ind: %d, Start: %d\n", ind, start)
-		if ind <= start {
+		if index <= pos {
 			return true
 		}
 
