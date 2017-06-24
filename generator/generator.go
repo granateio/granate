@@ -85,9 +85,11 @@ func New(config string) (*Generator, error) {
 		Config: genCfg,
 	}
 
+	gopath := os.Getenv("GOPATH")
+
 	gen.Template, err = template.New("main").
 		Funcs(gen.funcMap()).
-		ParseGlob("language/go/*.tmpl")
+		ParseGlob(gopath + "/src/github.com/granate/language/go/*.tmpl")
 
 	check(err)
 
