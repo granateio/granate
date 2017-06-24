@@ -12,7 +12,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/granate/generator/utils"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
@@ -51,8 +51,6 @@ func New(config string) (*Generator, error) {
 	genCfg := generatorConfig{}
 	err = yaml.Unmarshal(confFile, &genCfg)
 	check(err)
-
-	spew.Dump(&genCfg)
 
 	// Combine all .graphql files into one schema
 	var schema bytes.Buffer
