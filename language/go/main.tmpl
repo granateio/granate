@@ -9,7 +9,7 @@ import (
 
 {{define "Description" -}}
     "{{- range $i, $desc := . -}}
-    {{if $i}}\n" +
+    {{if $i}}  \n" +
     "{{end}}{{$desc}}
     {{- end -}}",
 {{- end}}
