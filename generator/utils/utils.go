@@ -89,7 +89,7 @@ func GetCommentBlock(src []byte, index int) (block []string) {
 
 		text := strings.TrimSpace(line.Text())
 
-		if strings.HasPrefix(text, "#") {
+		if strings.HasPrefix(text, "#") && linegap == true {
 			comment := strings.TrimSpace(strings.TrimLeft(text, "#"))
 
 			// Prepend new data to the comment block
