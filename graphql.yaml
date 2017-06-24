@@ -1,4 +1,0 @@
-language: go
-package: schema
-schemas:
-  - todo.graphql
