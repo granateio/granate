@@ -61,23 +61,9 @@ func (gen Generator) getBody(n ast.Node) string {
 var typemap = map[string]string{
 	"String":  "string",
 	"Int":     "int",
-	"Float":   "float",
+	"Float":   "float32",
 	"Boolean": "bool",
 	"ID":      "string",
-}
-
-// TODO: Remove this
-func namedGraphqlType(name string) bool {
-	switch name {
-	case
-		"String",
-		"Int",
-		"Float",
-		"Boolean",
-		"ID":
-		return true
-	}
-	return false
 }
 
 func (gen Generator) description(n ast.Node) []string {
