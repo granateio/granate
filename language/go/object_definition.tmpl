@@ -7,6 +7,12 @@ type {{.Name | def2native}} interface{
     {{range $desc := . | desc -}}
     // {{.}}
     {{end -}}
+    {{- if .Arguments -}}
+    // {{.Name.Value}}(
+    {{- range $i, $args := .Arguments -}}
+    {{if $i}},{{end}} {{ . | body -}}
+    {{- end }} )
+    {{ end -}}
     {{.Name.Value | public}}Field(
         {{- range $i, $args := .Arguments -}}
         {{if $i}}, {{end}}{{- .Type | def2native -}}
