@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/granate/schema"
 )
 
@@ -69,8 +69,18 @@ type Mutation struct {
 
 func (mut Mutation) CreateTodosField(id string,
 	todos []schema.TodoInputStruct) ([]schema.TodoInterface, error) {
-	spew.Dump(todos)
-	return nil, nil
+
+	newTodos := make([]schema.TodoInterface, 0, len(todos))
+
+	for i, v := range todos {
+		newTodos = append(newTodos, Todo{
+			ID:          strconv.Itoa(i + 1),
+			Description: v.Description,
+			Title:       v.Title,
+		})
+	}
+
+	return newTodos, nil
 }
 
 func (mut Mutation) ChangeTodoStatusField(id string, status int) (
