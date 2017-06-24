@@ -140,10 +140,11 @@ var passes = []generatorPass{
 func (gen *Generator) Generate() {
 	nodes := gen.Ast.Definitions
 	tmpl := gen.Template
+	var lines int
 
 	for _, pass := range passes {
 		var code bytes.Buffer
-		err := tmpl.ExecuteTemplate(&code, "Header", nil)
+		err := tmpl.ExecuteTemplate(&code, pass.Name+"_Header", nil)
 		_ = err
 		for _, n := range nodes {
 			err := tmpl.ExecuteTemplate(&code, pass.Name+"_"+n.GetKind(), n)
@@ -166,10 +167,14 @@ func (gen *Generator) Generate() {
 		}()
 
 		out, err := cmd.CombinedOutput()
-		// Format code here
+
+		ln, _ := utils.LineCounter(bytes.NewReader(out))
+		lines += ln
+
 		err = ioutil.WriteFile(filename, out, 0644)
 		check(err)
 	}
+	fmt.Printf("Generated %d lines of code\n", lines)
 
 }
 
