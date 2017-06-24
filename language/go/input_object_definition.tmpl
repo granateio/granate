@@ -27,6 +27,7 @@ var {{ .Name | def2graphql }} = {{cfg.Pkg}}.NewInputObject({{cfg.Pkg}}.InputObje
         {{end}}
     },
 })
+
 {{end}}
 
 {{define "NativeInputObjectDefinition" -}}

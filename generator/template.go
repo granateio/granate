@@ -112,13 +112,20 @@ func (gen *Generator) getType(typeset typeSet, t ast.Type) string {
 		var output bytes.Buffer
 		l := v.Loc
 		name := string(l.Source.Body[l.Start:l.End])
-		if namedGraphqlType(name) == true {
+
+		namedType, ok := typemap[name]
+
+		if ok == true {
+			if set == string(typeGraphql) {
+				namedType = name
+			}
 			gen.Template.ExecuteTemplate(&output, set+"Named", map[string]string{
 				// TODO: Fetch the correct name for native and graphql types
-				"Name": typemap[name],
+				"Name": namedType,
 			})
 			return output.String()
 		}
+
 		gen.Template.ExecuteTemplate(&output, set+gen.NamedLookup(name), map[string]string{
 			"Name": name,
 		})
