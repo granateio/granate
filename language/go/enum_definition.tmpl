@@ -17,7 +17,7 @@ var {{ .Name | def2graphql}} = {{cfg.Pkg}}.NewEnum({{cfg.Pkg}}.EnumConfig{
 {{end}}
 
 {{define "GraphqlEnumDefinition" -}}
-{{ .Name }}Enum
+{{ .Name | private }}Enum
 {{- end}}
 
 {{define "NativeEnumDefinition" -}}

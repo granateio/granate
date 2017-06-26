@@ -18,6 +18,7 @@ func (gen *Generator) funcMap() template.FuncMap {
 		"desc":        gen.description,
 		"cfg":         gen.getConfig,
 		"public":      gen.public,
+		"private":     gen.private,
 		"body":        gen.getBody,
 		"core":        gen.core,
 	}
@@ -50,6 +51,11 @@ func (gen *Generator) getConfig() interface{} {
 
 func (gen Generator) public(name string) string {
 	return strings.Title(name)
+}
+
+func (gen Generator) private(name string) string {
+	index := strings.ToLower(string(name[0]))
+	return index + name[1:]
 }
 
 func (gen Generator) getBody(n ast.Node) string {

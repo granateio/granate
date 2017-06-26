@@ -82,5 +82,5 @@ var {{ .Name | def2graphql }} = {{cfg.Pkg}}.NewObject({{cfg.Pkg}}.ObjectConfig{
 {{- end}}
 
 {{define "GraphqlObjectDefinition" -}}
-{{ .Name }}Definition
+{{ .Name | private }}Definition
 {{- end}}
