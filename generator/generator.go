@@ -124,6 +124,10 @@ type generatorPass struct {
 	File string
 }
 
+func (gen generatorPass) template(name string) string {
+	return gen.Name + "_" + name
+}
+
 // TODO: Should rethink the generator pass system issue: #4
 var passes = []generatorPass{
 	generatorPass{
@@ -144,12 +148,11 @@ func (gen *Generator) Generate() {
 
 	for _, pass := range passes {
 		var code bytes.Buffer
-		err := tmpl.ExecuteTemplate(&code, pass.Name+"_Header", nil)
+		err := tmpl.ExecuteTemplate(&code, pass.template("Header"), nil)
 		_ = err
 		for _, n := range nodes {
-			err := tmpl.ExecuteTemplate(&code, pass.Name+"_"+n.GetKind(), n)
+			err := tmpl.ExecuteTemplate(&code, pass.template(n.GetKind()), n)
 			_ = err
-			// check(err)
 		}
 
 		// Code output
