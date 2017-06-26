@@ -24,13 +24,13 @@ var todos = []schema.TodoInterface{
 	Todo{
 		ID:          "1",
 		Description: "A todo, pleas do",
-		Status:      1,
+		Status:      schema.ACTIVE,
 		Title:       "Do todos",
 	},
 	Todo{
 		ID:          "2",
 		Description: "Another todo, pleas don't do",
-		Status:      1,
+		Status:      schema.PAUSED,
 		Title:       "Don't do todos",
 	},
 }
