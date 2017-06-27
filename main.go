@@ -56,7 +56,7 @@ func main() {
 	// spew.Dump(opt)
 
 	// TODO: Add program paramaters/flags and stuff
-	file := "graphql.yaml"
+	file := "granate.yaml"
 
 	if len(os.Args) > 1 {
 		file = os.Args[1]

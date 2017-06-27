@@ -20,14 +20,12 @@ import (
 
 // Generator represents the code generator main object
 type Generator struct {
-	Code     string
-	Schema   string
-	Template *template.Template
-	Ast      *ast.Document
-	Config   generatorConfig
-	// TODO: Remove Config issue: #1
-	TmplConf genConfig
-}
+	Code       string
+	Schema     string
+	Template   *template.Template
+	Ast        *ast.Document
+	Config     ProjectConfig
+	TmplConfig genConfig
 
 // TODO genConfig and generatorConfig got to similar names
 type genConfig struct {
@@ -35,7 +33,8 @@ type genConfig struct {
 	ImportPath string
 }
 
-type generatorConfig struct {
+// ProjectConfig contains the granate.yaml information
+type ProjectConfig struct {
 	// TODO Support a globbing system
 	Schemas  []string
 	Language string
@@ -48,7 +47,7 @@ func New(config string) (*Generator, error) {
 	confFile, err := ioutil.ReadFile(config)
 	check(err)
 
-	genCfg := generatorConfig{}
+	genCfg := ProjectConfig{}
 	err = yaml.Unmarshal(confFile, &genCfg)
 	check(err)
 
