@@ -9,21 +9,21 @@ language:
     - Query
     - Mutation
     - Subscription
+templates:
+  - Header
+  - Boilerplate
 generator:
-  definition:
-    prefix: Def
+  - prefix: Def_
     filename: definitions.go
-  adapter:
-    prefix: Adp
+  - prefix: Adp_
     filename: adapters.go
-  provider:
-    prefix: pro
+  - prefix: Pro_
     filename: provider.go
 config:
-  pkg: "graphql"
-  imports:
-    - "github.com/graphql-go/graphql"
-    - "github.com/mitchellh/mapstructure"
+  Pkg: "graphql"
+  Imports: |
+      "github.com/graphql-go/graphql"
+      "github.com/mitchellh/mapstructure"
 formatter:
   cmd: "gofmt"
   args:

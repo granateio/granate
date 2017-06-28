@@ -20,17 +20,14 @@ import (
 
 // Generator represents the code generator main object
 type Generator struct {
-	Code       string
-	Schema     string
-	Template   *template.Template
-	Ast        *ast.Document
-	Config     ProjectConfig
-	TmplConfig genConfig
+	Code     string
+	Schema   string
+	Template *template.Template
+	Ast      *ast.Document
+	Config   ProjectConfig
+	LangConf LanguageConfig
 
-// TODO genConfig and generatorConfig got to similar names
-type genConfig struct {
-	Pkg        string
-	ImportPath string
+	TmplConf map[string]string
 }
 
 // ProjectConfig contains the granate.yaml information
@@ -39,6 +36,45 @@ type ProjectConfig struct {
 	Schemas  []string
 	Language string
 	Package  string
+}
+
+// LanguageConfig defines the language specific
+// implementation information
+type LanguageConfig struct {
+
+	// Language specific syntax config
+	Language struct {
+		Scalars map[string]string
+		Core    []string
+	}
+
+	// This is passed to the generators Cfg variable
+	Config map[string]string
+
+	// Prefix for the templates and the output filename
+	Passes struct {
+		Prefix   string
+		filename string
+	}
+
+	// Extra templates for each pass without prefix
+	Templates []string
+
+	// Program/command used for formatting the output code
+	Formatter struct {
+		CMD  string
+		Args []string
+	}
+}
+
+func (lang LanguageConfig) IsCore(val string) bool {
+	for _, core := range lang.Language.Core {
+		if core == val {
+			return true
+		}
+	}
+
+	return false
 }
 
 // New creates a new Generator instance
@@ -74,21 +110,28 @@ func New(config string) (*Generator, error) {
 
 	check(err)
 
-	gen := &Generator{
-		Schema: schema.String(),
-		Ast:    AST,
-		TmplConf: genConfig{
-			Pkg:        "graphql",
-			ImportPath: "github.com/graphql-go/graphql",
-		},
-		Config: genCfg,
-	}
-
 	gopath := os.Getenv("GOPATH")
+	projectpath := gopath + "/src/github.com/granate/"
+	langpath := projectpath + "language/" + genCfg.Language + "/"
+
+	langConfigFile, err := ioutil.ReadFile(langpath + "config.yaml")
+	check(err)
+
+	langConfig := LanguageConfig{}
+	err = yaml.Unmarshal(langConfigFile, &langConfig)
+	check(err)
+
+	gen := &Generator{
+		Schema:   schema.String(),
+		Ast:      AST,
+		TmplConf: langConfig.Config,
+		Config:   genCfg,
+		LangConf: langConfig,
+	}
 
 	gen.Template, err = template.New("main").
 		Funcs(gen.funcMap()).
-		ParseGlob(gopath + "/src/github.com/granate/language/go/*.tmpl")
+		ParseGlob(langpath + "*.tmpl")
 
 	check(err)
 
@@ -157,6 +200,8 @@ func (gen *Generator) Generate() {
 		// Code output
 		filename := gen.Config.Package + "/" + pass.File
 		fmt.Println(filename)
+
+		// fmt.Println(code.String())
 
 		// TODO: Read the fmt command from config
 		cmd := exec.Command("gofmt")
