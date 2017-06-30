@@ -1,6 +1,9 @@
 {{define "Adp_ObjectDefinition" -}}
-{{range $desc := . | desc -}}
+{{range $i, $desc := . | desc -}}
+{{- if $i | not}}// {{$.Name | def2native }} {{.}}
+{{else}}
 // {{.}}
+{{end -}}
 {{end -}}
 type {{.Name | def2native}} interface{
     {{range $fields := .Fields -}}
