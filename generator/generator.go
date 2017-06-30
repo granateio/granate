@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sync"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -188,39 +189,53 @@ func (gen *Generator) Generate() {
 	tmpl := gen.Template
 	var lines int
 
+	var wait sync.WaitGroup
+
 	for _, pass := range passes {
-		var code bytes.Buffer
-		err := tmpl.ExecuteTemplate(&code, pass.template("Header"), nil)
-		_ = err
-		for _, n := range nodes {
-			err := tmpl.ExecuteTemplate(&code, pass.template(n.GetKind()), n)
+		wait.Add(1)
+
+		go func(pass generatorPass) {
+			defer wait.Done()
+
+			var code bytes.Buffer
+			err := tmpl.ExecuteTemplate(&code, pass.template("Header"), nil)
 			_ = err
-		}
+			for _, n := range nodes {
+				err := tmpl.ExecuteTemplate(&code, pass.template(n.GetKind()), n)
+				_ = err
+			}
 
-		// Code output
-		filename := gen.Config.Package + "/" + pass.File
-		fmt.Println(filename)
+			// Code output
+			filename := gen.Config.Package + "/" + pass.File
+			fmt.Println(filename)
 
-		// fmt.Println(code.String())
+			debug := os.Getenv("GRANATE_DEBUG")
+			if debug == "true" {
+				fmt.Println(code.String())
+			}
 
-		// TODO: Read the fmt command from config
-		cmd := exec.Command("gofmt")
-		stdin, err := cmd.StdinPipe()
-		check(err)
+			// TODO: Read the fmt command from config
+			cmd := exec.Command("gofmt")
+			stdin, err := cmd.StdinPipe()
+			check(err)
 
-		go func() {
-			defer stdin.Close()
-			io.WriteString(stdin, code.String())
-		}()
+			go func() {
+				defer stdin.Close()
+				io.WriteString(stdin, code.String())
+			}()
 
-		out, err := cmd.CombinedOutput()
+			out, err := cmd.CombinedOutput()
 
-		ln, _ := utils.LineCounter(bytes.NewReader(out))
-		lines += ln
+			ln, _ := utils.LineCounter(bytes.NewReader(out))
+			lines += ln
 
-		err = ioutil.WriteFile(filename, out, 0644)
-		check(err)
+			err = ioutil.WriteFile(filename, out, 0644)
+			check(err)
+		}(pass)
 	}
+
+	wait.Wait()
+
 	fmt.Printf("Generated %d lines of code\n", lines)
 
 }
