@@ -3,11 +3,11 @@
 {{- end}}
 
 {{define "GraphqlNamed" -}}
-{{cfg.Pkg}}.{{.Name}}
+{{cfg.pkg}}.{{.Name}}
 {{- end}}
 
 {{define "GraphqlNonNull" -}}
-{{cfg.Pkg}}.NewNonNull({{.Type | def2graphql}})
+{{cfg.pkg}}.NewNonNull({{.Type | def2graphql}})
 {{- end}}
 
 {{define "NativeNonNull" -}}
@@ -15,7 +15,7 @@
 {{- end}}
 
 {{define "GraphqlList" -}}
-{{cfg.Pkg}}.NewList({{.Type | def2graphql}})
+{{cfg.pkg}}.NewList({{.Type | def2graphql}})
 {{- end}}
 
 {{define "NativeList" -}}

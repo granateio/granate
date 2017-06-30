@@ -20,8 +20,8 @@ generator:
   - prefix: Pro_
     filename: provider.go
 config:
-  Pkg: "graphql"
-  Imports: |
+  pkg: "graphql"
+  imports: |
       "github.com/graphql-go/graphql"
       "github.com/mitchellh/mapstructure"
 formatter:

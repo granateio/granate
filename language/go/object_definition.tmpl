@@ -25,23 +25,23 @@ type {{.Name | def2native}} interface{
 {{end}}
 
 {{define "Def_ObjectDefinition" -}}
-var {{ .Name | def2graphql }} = {{cfg.Pkg}}.NewObject({{cfg.Pkg}}.ObjectConfig{
+var {{ .Name | def2graphql }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
     Name: "{{.Name.Value}}",
     {{with $desc := . | desc -}}
     Description: {{template "Description" $desc}}
     {{end -}}
     {{with $fd := .Fields -}}
-    Fields: {{cfg.Pkg}}.Fields{
+    Fields: {{cfg.pkg}}.Fields{
         {{ range $fd }}
-        "{{.Name.Value}}": &{{cfg.Pkg}}.Field{
+        "{{.Name.Value}}": &{{cfg.pkg}}.Field{
             Type: {{.Type | def2graphql}},
             {{with $desc := . | desc -}}
             Description: {{template "Description" $desc}}
             {{end -}}
             {{with $args := .Arguments -}}
-            Args: {{cfg.Pkg}}.FieldConfigArgument{
+            Args: {{cfg.pkg}}.FieldConfigArgument{
                 {{ range $args -}}
-                "{{.Name.Value}}": &{{cfg.Pkg}}.ArgumentConfig{
+                "{{.Name.Value}}": &{{cfg.pkg}}.ArgumentConfig{
                     Type: {{.Type | def2graphql}},
                     {{with $desc := . | desc -}}
                     Description: {{template "Description" $desc}}
@@ -50,20 +50,17 @@ var {{ .Name | def2graphql }} = {{cfg.Pkg}}.NewObject({{cfg.Pkg}}.ObjectConfig{
                 {{end}}
             },
             {{end -}}
-            Resolve: func(params {{cfg.Pkg}}.ResolveParams) (interface{}, error) {
+            Resolve: func(params {{cfg.pkg}}.ResolveParams) (interface{}, error) {
                 {{ range $args := .Arguments -}}
                 var {{.Name.Value}}Arg {{.Type | def2native}}
                 mapstructure.Decode(params.Args["{{.Name.Value}}"], &{{.Name.Value}}Arg)
-                {{/*
-                {{.Name.Value}}Arg, _ := params.Args["{{.Name.Value}}"].({{.Type | def2native}})
-                */}}
                 {{end}}
                 {{if $.Name.Value | core}}
                     return Provider.{{$.Name.Value}}.{{.Name.Value | public}}Field(
                 {{- else -}}
                 {{$.Name.Value}}Source, _ := params.Source.({{$.Name | def2native}})
                 return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(
-                {{end}}
+                {{- end}}
                 {{- range $i, $args := .Arguments -}}
                 {{if $i}}, {{end}}{{.Name.Value}}Arg
                 {{- end -}}
