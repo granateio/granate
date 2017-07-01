@@ -46,7 +46,7 @@ type LanguageConfig struct {
 	// Language specific syntax config
 	Language struct {
 		Scalars map[string]string
-		Core    []string
+		Root    []string
 	}
 
 	// This is passed to the generators Cfg variable
@@ -68,9 +68,9 @@ type LanguageConfig struct {
 	}
 }
 
-func (lang LanguageConfig) IsCore(val string) bool {
-	for _, core := range lang.Language.Core {
-		if core == val {
+func (lang LanguageConfig) IsRoot(val string) bool {
+	for _, root := range lang.Language.Root {
+		if root == val {
 			return true
 		}
 	}

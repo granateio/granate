@@ -58,8 +58,8 @@ var {{ .Name | def2graphql }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
                 var {{.Name.Value}}Arg {{.Type | def2native}}
                 mapstructure.Decode(params.Args["{{.Name.Value}}"], &{{.Name.Value}}Arg)
                 {{end}}
-                {{if $.Name.Value | core}}
-                    return Provider.{{$.Name.Value}}.{{.Name.Value | public}}Field(
+                {{if $.Name.Value | root}}
+                    return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}Field(
                 {{- else -}}
                 {{$.Name.Value}}Source, _ := params.Source.({{$.Name | def2native}})
                 return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(

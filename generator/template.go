@@ -20,13 +20,13 @@ func (gen *Generator) funcMap() template.FuncMap {
 		"public":      gen.public,
 		"private":     gen.private,
 		"body":        gen.getBody,
-		"core":        gen.core,
+		"root":        gen.root,
 	}
 }
 
-// TODO: Load core functions from language config
-func (gen *Generator) core(name string) bool {
-	return gen.LangConf.IsCore(name)
+// TODO: Load root functions from language config
+func (gen *Generator) root(name string) bool {
+	return gen.LangConf.IsRoot(name)
 }
 
 func (gen *Generator) definition(name string) string {

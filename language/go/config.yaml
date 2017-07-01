@@ -5,7 +5,7 @@ language:
     Boolean: bool
     Int: int
     ID: string
-  core:
+  root:
     - Query
     - Mutation
     - Subscription
