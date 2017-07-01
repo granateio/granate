@@ -1,0 +1,121 @@
+{{define "Prov_Header"}}
+package schema
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/handler"
+)
+
+type schemaProvider struct {
+    {{ range $e := meta.RootFields -}}
+    {{ $e.Name.Value | private }} {{ $e.Name | def2native }}
+    {{ end }}
+
+	schema *graphql.Schema
+}
+
+var provider schemaProvider
+
+// ProviderConfig Defines a provider definition conig
+// Anything that satisfies the interfaces will work as a provider
+type ProviderConfig struct {
+    {{ range $e := meta.RootFields -}}
+    {{ $e.Name.Value }} {{ $e.Name | def2native }}
+    {{ end }}
+}
+
+// Schema Gets the schema for the current provider
+func Schema() *graphql.Schema {
+	if provider.schema == nil {
+		log.Fatal("You need to initiate the schema first")
+	}
+	return provider.schema
+}
+
+// Init Initiates a new provider
+func Init(conf ProviderConfig) {
+    {{ range $e := meta.RootFields }}
+    if conf.{{$e.Name.Value}} == nil {
+        panic("ProviderConfig.{{ $e.Name.Value }} cannot be nil")
+    }
+    {{ end }}
+
+	schemaConfig := graphql.SchemaConfig{
+        {{ range $e := meta.RootFields -}}
+        {{ $e.Name.Value }}: {{ $e.Name | def2graphql }},
+        {{ end }}
+	}
+
+	schema, err := graphql.NewSchema(schemaConfig)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	provider = schemaProvider{
+        {{ range $e := meta.RootFields -}}
+        {{ $e.Name.Value | private }}: conf.{{ $e.Name.Value }},
+        {{ end }}
+
+		schema:   &schema,
+	}
+}
+
+// Serve Servers the schema as well as a graphiql interface
+func Serve(addr string) {
+
+	h := handler.New(&handler.Config{
+		Schema: provider.schema,
+		Pretty: true,
+	})
+
+	// serve HTTP
+	http.Handle("/graphql", h)
+	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write(graphiql)
+	}))
+
+	http.ListenAndServe(addr, nil)
+}
+
+var graphiql = []byte(`
+<!DOCTYPE html>
+<html>
+   <head>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/graphiql/0.7.8/graphiql.css" />
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.2/react.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.2/react-dom.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/graphiql/0.7.8/graphiql.js"></script>
+   </head>
+   <body style="width: 100%; height: 100%; margin: 0; overflow: hidden;">
+      <div id="graphiql" style="height: 100vh;">Loading...</div>
+      <script>
+         function graphQLFetcher(graphQLParams) {
+            graphQLParams.variables = graphQLParams.variables ? JSON.parse(graphQLParams.variables) : null;
+            return fetch("/graphql", {
+               method: "post",
+               body: JSON.stringify(graphQLParams),
+               credentials: "include",
+            }).then(function (response) {
+               return response.text();
+            }).then(function (responseBody) {
+               try {
+                  return JSON.parse(responseBody);
+               } catch (error) {
+                  return responseBody;
+               }
+            });
+         }
+         ReactDOM.render(
+            React.createElement(GraphiQL, {fetcher: graphQLFetcher}),
+            document.getElementById("graphiql")
+         );
+      </script>
+   </body>
+</html>
+`)
+{{ end }}

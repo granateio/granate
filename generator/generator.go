@@ -175,6 +175,10 @@ func (gen generatorPass) template(name string) string {
 // TODO: Should rethink the generator pass system issue: #4
 var passes = []generatorPass{
 	generatorPass{
+		Name: "Prov",
+		File: "provider.go",
+	},
+	generatorPass{
 		Name: "Def",
 		File: "definitions.go",
 	},
