@@ -21,12 +21,17 @@ func (gen *Generator) funcMap() template.FuncMap {
 		"private":     gen.private,
 		"body":        gen.getBody,
 		"root":        gen.root,
+		"meta":        gen.meta,
 	}
 }
 
 // TODO: Load root functions from language config
 func (gen *Generator) root(name string) bool {
 	return gen.LangConf.IsRoot(name)
+}
+
+func (gen *Generator) meta() metaNodes {
+	return gen.Meta
 }
 
 func (gen *Generator) definition(name string) string {

@@ -27,6 +27,7 @@ type Generator struct {
 	Ast      *ast.Document
 	Config   ProjectConfig
 	LangConf LanguageConfig
+	Meta     metaNodes
 
 	TmplConf map[string]string
 }
@@ -183,6 +184,11 @@ var passes = []generatorPass{
 	},
 }
 
+type metaNodes struct {
+	RootFields  []ast.Node
+	RelayFields []ast.Node
+}
+
 // Generate starts the code generation process
 func (gen *Generator) Generate() {
 	nodes := gen.Ast.Definitions
@@ -190,6 +196,22 @@ func (gen *Generator) Generate() {
 	var lines int
 
 	var wait sync.WaitGroup
+	var meta metaNodes
+
+	// Gather usefull definitions
+	for _, n := range nodes {
+		def, ok := n.(namedDefinition)
+
+		if ok == false {
+			continue
+		}
+
+		if gen.LangConf.IsRoot(def.GetName().Value) {
+			meta.RootFields = append(meta.RootFields, n)
+		}
+	}
+
+	gen.Meta = meta
 
 	for _, pass := range passes {
 		wait.Add(1)
@@ -200,6 +222,7 @@ func (gen *Generator) Generate() {
 			var code bytes.Buffer
 			err := tmpl.ExecuteTemplate(&code, pass.template("Header"), nil)
 			_ = err
+
 			for _, n := range nodes {
 				err := tmpl.ExecuteTemplate(&code, pass.template(n.GetKind()), n)
 				_ = err
