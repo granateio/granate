@@ -56,15 +56,6 @@ func (gen Generator) getBody(n ast.Node) string {
 	return string(body[n.GetLoc().Start:n.GetLoc().End])
 }
 
-// TODO: Move this out to the language config (language/<lang>/config.yaml)
-var typemap = map[string]string{
-	"String":  "string",
-	"Int":     "int",
-	"Float":   "float32",
-	"Boolean": "bool",
-	"ID":      "string",
-}
-
 func (gen Generator) description(n ast.Node) []string {
 	return utils.GetCommentBlock(n.GetLoc().Source.Body, n.GetLoc().Start)
 }
