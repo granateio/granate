@@ -156,3 +156,24 @@ func LineCounter(r io.Reader) (int, error) {
 		}
 	}
 }
+
+// Lifo stack
+type Lifo struct {
+	Stack []interface{}
+}
+
+// Push a new element on the top of the stack
+func (lifo *Lifo) Push(elem interface{}) {
+	prepend := []interface{}{
+		elem,
+	}
+	lifo.Stack = append(prepend, lifo.Stack...)
+}
+
+// Pop an element from the top of the stack
+func (lifo *Lifo) Pop() interface{} {
+	elem := lifo.Stack[0]
+	lifo.Stack = lifo.Stack[1:]
+
+	return elem
+}
