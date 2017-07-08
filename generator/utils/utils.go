@@ -177,3 +177,27 @@ func (lifo *Lifo) Pop() interface{} {
 
 	return elem
 }
+
+// OpaqueBytesBuffer is a genereic byte buffer interface
+type OpaqueBytesBuffer interface {
+	GetBuffer() *bytes.Buffer
+}
+
+// SwapBuffer is a writeable buffer where the underlying buffer can be swaped
+type SwapBuffer struct {
+	buffer OpaqueBytesBuffer
+}
+
+func (tb SwapBuffer) Write(b []byte) (int, error) {
+	return tb.buffer.GetBuffer().Write(b)
+}
+
+// SwapBuffer swaps the current buffer with b
+func (tb *SwapBuffer) SwapBuffer(b OpaqueBytesBuffer) {
+	tb.buffer = b
+}
+
+// GetBuffer gets get current buffer
+func (tb SwapBuffer) GetBuffer() OpaqueBytesBuffer {
+	return tb.buffer
+}
