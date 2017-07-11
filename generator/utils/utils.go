@@ -192,8 +192,8 @@ func (tb SwapBuffer) Write(b []byte) (int, error) {
 	return tb.buffer.GetBuffer().Write(b)
 }
 
-// SwapBuffer swaps the current buffer with b
-func (tb *SwapBuffer) SwapBuffer(b OpaqueBytesBuffer) {
+// SetBuffer swaps the current buffer with b
+func (tb *SwapBuffer) SetBuffer(b OpaqueBytesBuffer) {
 	tb.buffer = b
 }
 
