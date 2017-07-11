@@ -2,9 +2,9 @@ package generator
 
 import (
 	"bytes"
-	"html/template"
 	"log"
 	"strings"
+	"text/template"
 
 	"github.com/granate/generator/utils"
 	"github.com/graphql-go/graphql/language/ast"

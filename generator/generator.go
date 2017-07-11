@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"text/template"
 
 	yaml "gopkg.in/yaml.v2"
 
