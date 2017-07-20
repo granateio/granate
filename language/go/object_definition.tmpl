@@ -1,11 +1,11 @@
-{{define "Adp_ObjectDefinition" -}}
+{{define "Native/ObjectDefinition" -}}
 {{range $i, $desc := . | desc -}}
-{{- if $i | not}}// {{$.Name | def2native }} {{.}}
+{{- if $i | not}}// {{$.Name | nativetype }} {{.}}
 {{else}}
 // {{.}}
 {{end -}}
 {{end -}}
-type {{.Name | def2native}} interface{
+type {{.Name | nativetype}} interface{
     {{range $fields := .Fields -}}
     {{range $desc := . | desc -}}
     // {{.}}
@@ -17,27 +17,71 @@ type {{.Name | def2native}} interface{
     {{- end }} )
     {{ end -}}
     {{.Name.Value | public}}Field(
+        {{- if .Type | connection -}}
+        relay.ConnectionArguments
+        {{- else -}}
         {{- range $i, $args := .Arguments -}}
-        {{if $i}}, {{end}}{{- .Type | def2native -}}
+        {{if $i}}, {{end}}{{- .Type | nativetype -}}
         {{- end -}}
-    ) ({{.Type | def2native}}, error)
+        {{- end -}}
+    ) ({{.Type | nativetype}}, error)
 
     {{end}}
 }
 
 {{end}}
 
-{{define "Def_ObjectDefinition" -}}
-var {{ .Name | def2graphql }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
+{{define "Graphql/ObjectDefinition" -}}
+var {{ .Name | graphqltype }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
     Name: "{{.Name.Value}}",
+    Fields: graphql.Fields{},
     {{with $desc := . | desc -}}
     Description: {{template "Description" $desc}}
     {{end -}}
+    {{ if (len .Interfaces) }}
+    Interfaces: (graphql.InterfacesThunk)(func() []*graphql.Interface {
+        return []*graphql.Interface{
+        {{ range $iface := .Interfaces }}
+            {{ if eq ($iface | body) "Node" }}
+            nodeDefinitions.NodeInterface,
+            {{ else }}
+            {{$iface | graphqltype}},
+            {{ end }}
+        {{ end }}
+        }
+    }),
+    {{ end }}
+})
+
+{{end}}
+
+{{define "Fields/ObjectDefinition" -}}
+    {{ $definition := .Name | graphqltype }}
+    {{ if and (.Name.Value | root) (eq .Name.Value "Query") (len nodes.Relay)}}
+    {{ $definition }}.AddFieldConfig("node", nodeDefinitions.NodeField) 
+    {{ end }}
+    {{ if .Name.Value | relaypayload }}
+    {{ $definition }}.AddFieldConfig("clientMutationId",
+		&graphql.Field{
+			Type: graphql.String,
+
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+				source := params.Source.(map[string]interface{})
+				id := source["clientMutationId"].(string)
+				return id, nil
+			},
+		},
+	)
+    {{ end }}
     {{with $fd := .Fields -}}
-    Fields: {{cfg.pkg}}.Fields{
-        {{ range $fd }}
-        "{{.Name.Value}}": &{{cfg.pkg}}.Field{
-            Type: {{.Type | def2graphql}},
+    {{ range $fd }}
+    {{ $definition }}.AddFieldConfig("{{ .Name.Value }}", 
+        {{ if and (relay $.Interfaces) (eq .Name.Value "id") }}
+        relay.GlobalIDField("{{$.Name.Value}}", idFetchFunction),
+        {{ else }}
+        &{{cfg.pkg}}.Field{
+            Type: {{.Type | graphqltype}},
+            {{if not (.Type | connection) }}
             {{with $desc := . | desc -}}
             Description: {{template "Description" $desc}}
             {{end -}}
@@ -45,7 +89,7 @@ var {{ .Name | def2graphql }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
             Args: {{cfg.pkg}}.FieldConfigArgument{
                 {{ range $args -}}
                 "{{.Name.Value}}": &{{cfg.pkg}}.ArgumentConfig{
-                    Type: {{.Type | def2graphql}},
+                    Type: {{.Type | graphqltype}},
                     {{with $desc := . | desc -}}
                     Description: {{template "Description" $desc}}
                     {{end -}}
@@ -54,28 +98,62 @@ var {{ .Name | def2graphql }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
             },
             {{end -}}
             Resolve: func(params {{cfg.pkg}}.ResolveParams) (interface{}, error) {
-                {{ range $args := .Arguments -}}
-                var {{.Name.Value}}Arg {{.Type | def2native}}
-                mapstructure.Decode(params.Args["{{.Name.Value}}"], &{{.Name.Value}}Arg)
-                {{end}}
-                {{if $.Name.Value | root}}
-                    return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}Field(
-                {{- else -}}
-                {{$.Name.Value}}Source, _ := params.Source.({{$.Name | def2native}})
-                return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(
-                {{- end}}
-                {{- range $i, $args := .Arguments -}}
-                {{if $i}}, {{end}}{{.Name.Value}}Arg
-                {{- end -}}
-                )
-            },
-        },
-        {{end}}
-    },
-    {{end}}
-})
 
-{{end}}
+                {{ $returnspayload := (.Type | namedtype) | relaypayload }}
+                {{ $ispayload := $.Name.Value | relaypayload }}
+                {{ range $args := .Arguments -}}
+                    var {{.Name.Value}}Arg {{.Type | nativetype}}
+                    mapstructure.Decode(params.Args["{{.Name.Value}}"], &{{.Name.Value}}Arg)
+                    {{end}}
+                    {{if $.Name.Value | root}}
+                        {{ if eq $returnspayload true }}
+                            payload, err := provider.{{$.Name.Value | private}}.{{.Name.Value | public}}Field(
+                        {{- else -}}
+                            return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}Field(
+                        {{- end -}}
+                    {{- else -}}
+                        {{ if eq $ispayload true }}
+                        source := params.Source.(map[string]interface{})
+                        {{$.Name.Value}}Source, _ := source["payload"].({{$.Name | nativetype}})
+                        {{ else }}
+                        {{$.Name.Value}}Source, _ := params.Source.({{$.Name | nativetype}})
+                        {{ end }}
+                        return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(
+                    {{- end}}
+                    {{- range $i, $args := .Arguments -}}
+                        {{if $i}}, {{end}}{{.Name.Value}}Arg
+                    {{- end -}})
+                    {{ if eq $returnspayload true }}
+                        if err != nil {
+                            return nil, err
+                        }
+                        id := params.Args["input"].(map[string]interface{})["clientMutationId"]
+                        return map[string]interface{}{
+                            "payload":          payload,
+                            "clientMutationId": id,
+                        }, nil
+                    {{ end }}
+
+            },
+            {{ else }}{{/* else not connection */}} 
+            Args: relay.ConnectionArgs,
+            Resolve: func(params {{cfg.pkg}}.ResolveParams) (interface{}, error) {
+                args := relay.NewConnectionArguments(params.Args)
+                {{if $.Name.Value | root}}
+                return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}Field(
+                {{- else -}}
+                {{$.Name.Value}}Source, _ := params.Source.({{$.Name | nativetype}})
+                return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(
+                {{- end}} args)
+
+            },
+            {{ end }}{{/* end if connection */}}
+        },
+        {{ end }} {{/* end if a relay id field */}}
+    ){{end}}
+    {{end}}
+
+{{ end }}
 
 {{define "NativeObjectDefinition" -}}
 {{ .Name }}Interface

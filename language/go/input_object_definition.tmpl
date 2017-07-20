@@ -1,17 +1,17 @@
-{{define "Adp_InputObjectDefinition" -}}
-type {{ .Name | def2native }} struct{
+{{define "Native/InputObjectDefinition" -}}
+type {{ .Name | nativetype }} struct{
     {{- range $fields := .Fields}}
     {{range $desc := . | desc -}}
     // {{ $desc }}
     {{end -}}
-    {{.Name.Value | public}} {{.Type | def2native}}
+    {{.Name.Value | public}} {{.Type | nativetype}}
     {{end}}
 }
 
 {{end}}
 
-{{define "Def_InputObjectDefinition" -}}
-var {{ .Name | def2graphql }} = {{cfg.pkg}}.NewInputObject({{cfg.pkg}}.InputObjectConfig{
+{{define "Graphql/InputObjectDefinition" -}}
+var {{ .Name | graphqltype }} = {{cfg.pkg}}.NewInputObject({{cfg.pkg}}.InputObjectConfig{
     Name: "{{ .Name.Value }}",
     {{with $desc := . | desc -}}
     Description: {{template "Description" $desc}}
@@ -19,12 +19,17 @@ var {{ .Name | def2graphql }} = {{cfg.pkg}}.NewInputObject({{cfg.pkg}}.InputObje
     Fields: {{cfg.pkg}}.InputObjectConfigFieldMap {
         {{range $fields := .Fields}}
         "{{.Name.Value}}":  &{{cfg.pkg}}.InputObjectFieldConfig{
-            Type: {{.Type | def2graphql}},
+            Type: {{.Type | graphqltype}},
             {{with $desc := . | desc -}}
             Description: {{template "Description" $desc}}
             {{end -}}
         },
         {{end}}
+        {{ if .Name.Value | relayinput }}
+		"clientMutationId": &graphql.InputObjectFieldConfig{
+			Type: graphql.String,
+		},
+        {{ end }}
     },
 })
 

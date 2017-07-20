@@ -3,12 +3,13 @@ package generator
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path"
+	"strings"
 	"sync"
 	"text/template"
 
@@ -28,7 +29,7 @@ type Generator struct {
 	Ast      *ast.Document
 	Config   ProjectConfig
 	LangConf LanguageConfig
-	Meta     metaNodes
+	Nodes    astNodes
 
 	TmplConf map[string]string
 }
@@ -38,7 +39,7 @@ type ProjectConfig struct {
 	// TODO Support a globbing system
 	Schemas  []string
 	Language string
-	Package  string
+	Output   map[string]string
 }
 
 // LanguageConfig defines the language specific
@@ -54,13 +55,8 @@ type LanguageConfig struct {
 	// This is passed to the generators Cfg variable
 	Config map[string]string
 
-	// Prefix for the templates and the output filename
-	Passes struct {
-		Prefix   string
-		filename string
-	}
-
-	// Extra templates for each pass without prefix
+	// Main templates, each template in this list is executed in it's own
+	// go routine
 	Templates []string
 
 	// Program/command used for formatting the output code
@@ -68,6 +64,91 @@ type LanguageConfig struct {
 		CMD  string
 		Args []string
 	}
+}
+
+type OutputFileBuffer struct {
+	Path   string
+	Buffer *bytes.Buffer
+}
+
+func (out *OutputFileBuffer) GetBuffer() *bytes.Buffer {
+	return out.Buffer
+}
+
+type TemplateFileFuncs struct {
+	BufferStack   *utils.Lifo
+	SwapBuffer    *utils.SwapBuffer
+	LocalTemplate *template.Template
+}
+
+func (tmpl *TemplateFileFuncs) Start(path string) string {
+	// Push current buffer on the stack
+	tmpl.BufferStack.Push(tmpl.SwapBuffer.GetBuffer())
+
+	// Create a new OpaqueBuffer
+	output := &OutputFileBuffer{
+		Path:   path,
+		Buffer: &bytes.Buffer{},
+	}
+
+	tmpl.SwapBuffer.SetBuffer(output)
+
+	return ""
+}
+
+func (tmpl *TemplateFileFuncs) End() string {
+
+	output, ok := tmpl.SwapBuffer.GetBuffer().(*OutputFileBuffer)
+
+	if ok == false {
+		panic("GetBuffer() does not return a pointer to OutputFileBuffer")
+	}
+
+	if output.Path == "" {
+		return ""
+	}
+
+	// fmt.Println(output.GetBuffer().String())
+	// Unnecessary:
+	// tmpl.FileBuffers = append(tmpl.FileBuffers, output)
+
+	dir := path.Join(".", path.Dir(output.Path))
+	err := os.MkdirAll(dir, os.ModePerm)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// TODO: Read the fmt command from config
+	// cmd := exec.Command("gofmt")
+	cmd := exec.Command("goimports")
+	stdin, err := cmd.StdinPipe()
+	check(err)
+
+	// fmt.Println(output.GetBuffer().String())
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, output.GetBuffer().String())
+	}()
+
+	out, err := cmd.CombinedOutput()
+
+	// TODO: Make LineCounter work again
+	// ln, _ := utils.LineCounter(bytes.NewReader(out))
+	// lines += ln
+
+	err = ioutil.WriteFile(output.Path, out, 0644)
+	check(err)
+
+	prevBuffer, ok := tmpl.BufferStack.Pop().(utils.OpaqueBytesBuffer)
+	if ok == false {
+		panic("Found wrong type in BufferStack")
+	}
+
+	tmpl.SwapBuffer.SetBuffer(prevBuffer)
+
+	return ""
 }
 
 func (lang LanguageConfig) IsRoot(val string) bool {
@@ -100,7 +181,7 @@ func New(config string) (*Generator, error) {
 
 	// Create the generated package directory
 	// Ignore error for now
-	err = os.Mkdir(genCfg.Package, 0766)
+	// err = os.Mkdir(genCfg.Package, 0766)
 
 	src := source.NewSource(&source.Source{
 		Body: schema.Bytes(),
@@ -132,6 +213,8 @@ func New(config string) (*Generator, error) {
 		LangConf: langConfig,
 	}
 
+	// gen.Nodes.Connection = make(map[string]ast.Node)
+
 	gen.Template, err = template.New("main").
 		Funcs(gen.funcMap()).
 		ParseGlob(langpath + "*.tmpl")
@@ -147,8 +230,8 @@ type namedDefinition interface {
 }
 
 // TODO: Find a better name for the NamedLookup function
-func (gen *Generator) NamedLookup(name string) string {
-	nodes := gen.Ast.Definitions
+func (gen *Generator) NamedLookup(name string) ast.Node {
+	nodes := gen.Nodes.Definition
 
 	for _, node := range nodes {
 		named, ok := node.(namedDefinition)
@@ -156,12 +239,27 @@ func (gen *Generator) NamedLookup(name string) string {
 			continue
 		}
 		if named.GetName().Value == name {
-			return named.GetKind()
+			return node
+		}
+	}
+
+	return nil
+}
+
+// TODO: Much the same as the NamedLookup function
+func NodeByName(nodes []ast.Node, name string) ast.Node {
+	for _, node := range nodes {
+		named, ok := node.(namedDefinition)
+		if ok == false {
+			continue
+		}
+		if named.GetName().Value == name {
+			return node
 		}
 	}
 
 	log.Fatalf("Type with name '%s' is not defined", name)
-	return ""
+	return nil
 }
 
 type generatorPass struct {
@@ -173,93 +271,156 @@ func (gen generatorPass) template(name string) string {
 	return gen.Name + "_" + name
 }
 
-// TODO: Should rethink the generator pass system issue: #4
-var passes = []generatorPass{
-	generatorPass{
-		Name: "Prov",
-		File: "provider.go",
-	},
-	generatorPass{
-		Name: "Def",
-		File: "definitions.go",
-	},
-	generatorPass{
-		Name: "Adp",
-		File: "adapters.go",
-	},
+type astNodes struct {
+	Root       []ast.Node
+	Definition []ast.Node
+	Relay      []ast.Node
+	Connection map[string]bool
 }
 
-type metaNodes struct {
-	RootFields  []ast.Node
-	RelayFields []ast.Node
+type ConnectionDefinition struct {
+	Name     *ast.Name
+	Loc      *ast.Location
+	NodeType ast.Node
+}
+
+func (con ConnectionDefinition) GetKind() string {
+	return "ConnectionDefinition"
+}
+
+func (con ConnectionDefinition) GetLoc() *ast.Location {
+	return con.Loc
+}
+
+func (con ConnectionDefinition) GetName() *ast.Name {
+	return con.Name
 }
 
 // Generate starts the code generation process
 func (gen *Generator) Generate() {
-	nodes := gen.Ast.Definitions
+	definitions := gen.Ast.Definitions
+
 	tmpl := gen.Template
+	mainTemplates := gen.LangConf.Templates
 	var lines int
 
 	var wait sync.WaitGroup
-	var meta metaNodes
+	var nodes astNodes
+	nodes.Connection = make(map[string]bool)
 
 	// Gather usefull definitions
-	for _, n := range nodes {
-		def, ok := n.(namedDefinition)
+	for _, def := range definitions {
+		namedef, ok := def.(namedDefinition)
 
 		if ok == false {
 			continue
 		}
 
-		if gen.LangConf.IsRoot(def.GetName().Value) {
-			meta.RootFields = append(meta.RootFields, n)
+		nodes.Definition = append(nodes.Definition, def)
+
+		if gen.LangConf.IsRoot(namedef.GetName().Value) {
+			nodes.Root = append(nodes.Root, def)
+		}
+
+		objectDef, ok := def.(*ast.ObjectDefinition)
+		if ok == false {
+			continue
+		}
+
+		// Find and add relay connections
+		for _, connection := range objectDef.Fields {
+			conloc := connection.Type.GetLoc()
+			contype := string(conloc.Source.Body[conloc.Start:conloc.End])
+			if strings.HasSuffix(contype, "Connection") {
+				if _, ok := nodes.Connection[contype]; ok == true {
+					continue
+				}
+				con := ConnectionDefinition{
+					Name: ast.NewName(&ast.Name{
+						Value: contype,
+					}),
+					Loc:      connection.Loc,
+					NodeType: NodeByName(gen.Ast.Definitions, strings.TrimSuffix(contype, "Connection")),
+				}
+				nodes.Definition = append(nodes.Definition, con)
+				nodes.Connection[contype] = true
+				fmt.Println("Found connections", connection.Name.Value)
+			}
+		}
+
+		for _, iface := range objectDef.Interfaces {
+			body := string(iface.Loc.Source.Body)
+			name := body[iface.Loc.Start:iface.Loc.End]
+			if name == "Node" {
+				// Add nodes that implements the Relay Node interface
+				nodes.Relay = append(nodes.Relay, def)
+			}
 		}
 	}
 
-	gen.Meta = meta
+	gen.Nodes = nodes
+	// gen.Nodes.Connection = make(map[string]ast.Node)
 
-	for _, pass := range passes {
+	for _, mainTmpl := range mainTemplates {
 		wait.Add(1)
 
-		go func(pass generatorPass) {
+		go func(mainTmpl string) {
 			defer wait.Done()
 
-			var code bytes.Buffer
-			err := tmpl.ExecuteTemplate(&code, pass.template("Header"), nil)
-			_ = err
-
-			for _, n := range nodes {
-				err := tmpl.ExecuteTemplate(&code, pass.template(n.GetKind()), n)
-				_ = err
+			localTemplate, err := tmpl.Clone()
+			if err != nil {
+				panic(err)
 			}
+
+			codebuffer := &utils.SwapBuffer{}
+			codebuffer.SetBuffer(&OutputFileBuffer{
+				Buffer: &bytes.Buffer{},
+			})
+
+			localFileFuncs := TemplateFileFuncs{
+				BufferStack:   &utils.Lifo{},
+				SwapBuffer:    codebuffer,
+				LocalTemplate: localTemplate,
+			}
+
+			partialfunc := func(name string, data interface{}) string {
+				localbuffer := bytes.Buffer{}
+				localTemplate.ExecuteTemplate(&localbuffer, name, data)
+				return localbuffer.String()
+			}
+
+			fileFuncsMap := template.FuncMap{
+				"startfile": localFileFuncs.Start,
+				"endfile":   localFileFuncs.End,
+				"partial":   partialfunc,
+			}
+
+			localTemplate = localTemplate.Funcs(fileFuncsMap)
+
+			err = localTemplate.ExecuteTemplate(codebuffer, mainTmpl, nil)
+			if err != nil {
+				panic(err)
+			}
+
+			// var code bytes.Buffer
+			// err := tmpl.ExecuteTemplate(&code, pass.template("Header"), nil)
+			// _ = err
+
+			// for _, n := range nodes {
+			// 	err := tmpl.ExecuteTemplate(&code, pass.template(n.GetKind()), n)
+			// 	_ = err
+			// }
 
 			// Code output
-			filename := gen.Config.Package + "/" + pass.File
-			fmt.Println(filename)
+			// filename := gen.Config.Package + "/" + pass.File
+			// fmt.Println(filename)
 
-			debug := os.Getenv("GRANATE_DEBUG")
-			if debug == "true" {
-				fmt.Println(code.String())
-			}
+			// debug := os.Getenv("GRANATE_DEBUG")
+			// if debug == "true" {
+			// 	fmt.Println(code.String())
+			// }
 
-			// TODO: Read the fmt command from config
-			cmd := exec.Command("gofmt")
-			stdin, err := cmd.StdinPipe()
-			check(err)
-
-			go func() {
-				defer stdin.Close()
-				io.WriteString(stdin, code.String())
-			}()
-
-			out, err := cmd.CombinedOutput()
-
-			ln, _ := utils.LineCounter(bytes.NewReader(out))
-			lines += ln
-
-			err = ioutil.WriteFile(filename, out, 0644)
-			check(err)
-		}(pass)
+		}(mainTmpl)
 	}
 
 	wait.Wait()

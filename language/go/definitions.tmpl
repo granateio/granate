@@ -1,0 +1,67 @@
+{{ define "Definitions" }}
+{{- startfile (print output.schema "/definitions.go") }}
+package {{output.schema}}
+
+import (
+    "golang.org/x/net/context"
+)
+
+{{ with $nodes := nodes.Relay }}
+type idFieldInterface interface {
+	IdField() (string, error)
+}
+
+func idFetchFunction(obj interface{}, info graphql.ResolveInfo, ctx context.Context) (string, error) {
+	field, ok := obj.(idFieldInterface)
+	if ok == false {
+		return "", errors.New("Could not resolve the id")
+	}
+
+	return field.IdField()
+}
+
+var nodeDefinitions *relay.NodeDefinitions
+{{ end }}
+{{/* Predeclare everythig to avoid init loop */}}
+{{ range $i, $definition := nodes.Definition }}
+{{ partial (print "Graphql/" (kind $definition)) $definition }}
+{{ end }}
+func init() {
+
+{{ with $nodes := nodes.Relay }}
+nodeDefinitions = relay.NewNodeDefinitions(relay.NodeDefinitionsConfig{
+IDFetcher: func(id string, info {{cfg.pkg}}.ResolveInfo, ctx context.Context) (interface{}, error) {
+		resolvedID := relay.FromGlobalID(id)
+        if resolvedID == nil {
+            return nil, errors.New("The id is not a valid relay identifier")
+        }
+
+		switch resolvedID.Type {
+		{{- range $node := $nodes }}
+		case "{{$node.Name.Value}}":
+			return provider.relay.Get{{$node.Name.Value}}(resolvedID.ID)
+		{{ end -}}
+		default:
+			return nil, fmt.Errorf("Unknown node type '%s'", resolvedID.Type)
+		}
+	},
+	TypeResolve: func(p {{cfg.pkg}}.ResolveTypeParams) *{{cfg.pkg}}.Object {
+		switch p.Value.(type) {
+		{{- range $node := $nodes }}
+		case {{$node.Name | nativetype}}:
+			return {{$node.Name | graphqltype}}
+		{{ end -}}
+		}
+
+        return nil
+	},
+})
+{{ end }}
+
+
+{{ range $i, $definition := nodes.Definition }}
+{{ partial (print "Fields/" (kind $definition)) $definition }}
+{{ end }}
+}
+{{ endfile -}}
+{{ end }}

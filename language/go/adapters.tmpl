@@ -1,0 +1,15 @@
+{{ define "Adapters" }}
+{{- startfile (print output.schema "/adapters.go") }}
+package {{output.schema}}
+{{ range $i, $definition := nodes.Definition }}
+{{ partial (print "Native/" (kind $definition)) $definition }}
+{{ end }}
+{{ if (len nodes.Relay) }}
+type RelayInterface interface {
+{{ range $node := nodes.Relay }}
+	Get{{$node.Name.Value}}(string) ({{$node.Name | nativetype}}, error)
+{{ end }}
+}
+{{ end }}
+{{ endfile -}}
+{{ end }}

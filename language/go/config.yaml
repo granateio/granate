@@ -10,15 +10,10 @@ language:
     - Mutation
     - Subscription
 templates:
-  - Header
-  - Boilerplate
-generator:
-  - prefix: Def_
-    filename: definitions.go
-  - prefix: Adp_
-    filename: adapters.go
-  - prefix: Pro_
-    filename: provider.go
+  - Definitions
+  - Adapters
+  - Provider
+  # - Boilerplate
 config:
   pkg: "graphql"
   imports: |

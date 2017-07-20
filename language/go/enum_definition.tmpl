@@ -1,4 +1,4 @@
-{{define "Adp_EnumDefinition"}}
+{{define "Native/EnumDefinition"}}
 const (
 {{ range $i, $e := .Values }}
 	{{.Name.Value}} int = {{$i}}
@@ -6,8 +6,8 @@ const (
 )
 {{end}}
 
-{{define "Def_EnumDefinition" -}} {{/* add "Enum" .Name.Value */}}
-var {{ .Name | def2graphql}} = {{cfg.pkg}}.NewEnum({{cfg.pkg}}.EnumConfig{
+{{define "Graphql/EnumDefinition" -}} {{/* add "Enum" .Name.Value */}}
+var {{ .Name | graphqltype}} = {{cfg.pkg}}.NewEnum({{cfg.pkg}}.EnumConfig{
     Name: "{{.Name.Value}}",
     Values: {{cfg.pkg}}.EnumValueConfigMap{
         {{template "EnumValueDefinition" .Values}}

@@ -1,5 +1,6 @@
-{{define "Prov_Header"}}
-package schema
+{{define "Provider"}}
+{{ startfile (print output.schema "/provider.go") }}
+package {{output.schema}}
 
 import (
 	"log"
@@ -10,8 +11,12 @@ import (
 )
 
 type schemaProvider struct {
-    {{ range $e := meta.RootFields -}}
-    {{ $e.Name.Value | private }} {{ $e.Name | def2native }}
+    {{ range $e := nodes.Root -}}
+    {{ $e.Name.Value | private }} {{ $e.Name | nativetype }}
+    {{ end }}
+
+    {{ if (len nodes.Relay) }}
+    relay RelayInterface
     {{ end }}
 
 	schema *graphql.Schema
@@ -19,11 +24,15 @@ type schemaProvider struct {
 
 var provider schemaProvider
 
-// ProviderConfig Defines a provider definition conig
+// ProviderConfig Defines a provider definition config
 // Anything that satisfies the interfaces will work as a provider
 type ProviderConfig struct {
-    {{ range $e := meta.RootFields -}}
-    {{ $e.Name.Value }} {{ $e.Name | def2native }}
+    {{ range $e := nodes.Root -}}
+    {{ $e.Name.Value }} {{ $e.Name | nativetype }}
+    {{ end }}
+
+    {{ if (len nodes.Relay) }}
+    Relay RelayInterface
     {{ end }}
 }
 
@@ -37,15 +46,20 @@ func Schema() *graphql.Schema {
 
 // Init Initiates a new provider
 func Init(conf ProviderConfig) {
-    {{ range $e := meta.RootFields }}
+    {{ range $e := nodes.Root }}
     if conf.{{$e.Name.Value}} == nil {
         panic("ProviderConfig.{{ $e.Name.Value }} cannot be nil")
     }
     {{ end }}
+    {{ if (len nodes.Relay) }}
+    if conf.Relay == nil {
+        panic("ProviderConfig.Relay cannot be nil")
+    }
+    {{ end }}
 
 	schemaConfig := graphql.SchemaConfig{
-        {{ range $e := meta.RootFields -}}
-        {{ $e.Name.Value }}: {{ $e.Name | def2graphql }},
+        {{ range $e := nodes.Root -}}
+        {{ $e.Name.Value }}: {{ $e.Name | graphqltype }},
         {{ end }}
 	}
 
@@ -56,8 +70,11 @@ func Init(conf ProviderConfig) {
 	}
 
 	provider = schemaProvider{
-        {{ range $e := meta.RootFields -}}
+        {{ range $e := nodes.Root -}}
         {{ $e.Name.Value | private }}: conf.{{ $e.Name.Value }},
+        {{ end }}
+        {{ if (len nodes.Relay) }}
+        relay: conf.Relay,
         {{ end }}
 
 		schema:   &schema,
@@ -118,4 +135,5 @@ var graphiql = []byte(`
    </body>
 </html>
 `)
+{{ endfile }}
 {{ end }}

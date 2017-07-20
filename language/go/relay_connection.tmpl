@@ -1,0 +1,14 @@
+{{ define "Graphql/ConnectionDefinition" }}
+var {{.Name.Value | private }}Definition = relay.ConnectionDefinitions(relay.ConnectionConfig{
+	Name:     "{{.NodeType.Name.Value}}",
+	NodeType: {{.NodeType.Name | graphqltype}},
+})
+{{ end }}
+
+{{ define "GraphqlConnectionDefinition" -}}
+{{.Name | private}}Definition.ConnectionType
+{{- end }}
+
+{{ define "NativeConnectionDefinition" -}}
+*relay.Connection
+{{- end }}

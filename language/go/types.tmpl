@@ -7,17 +7,17 @@
 {{- end}}
 
 {{define "GraphqlNonNull" -}}
-{{cfg.pkg}}.NewNonNull({{.Type | def2graphql}})
+{{cfg.pkg}}.NewNonNull({{.Type | graphqltype}})
 {{- end}}
 
 {{define "NativeNonNull" -}}
-{{ .Type | def2native}}
+{{ .Type | nativetype}}
 {{- end}}
 
 {{define "GraphqlList" -}}
-{{cfg.pkg}}.NewList({{.Type | def2graphql}})
+{{cfg.pkg}}.NewList({{.Type | graphqltype}})
 {{- end}}
 
 {{define "NativeList" -}}
-[]{{ .Type | def2native}}
+[]{{ .Type | nativetype}}
 {{- end}}
