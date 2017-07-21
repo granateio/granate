@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/granate/example/schema"
+	"github.com/granateio/granate/example/schema"
 )
 
 var _ schema.UserInterface = (*User)(nil)

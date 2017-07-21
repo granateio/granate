@@ -15,7 +15,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/granate/generator/utils"
+	"github.com/granateio/granate/generator/utils"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
@@ -79,6 +79,11 @@ type TemplateFileFuncs struct {
 	BufferStack   *utils.Lifo
 	SwapBuffer    *utils.SwapBuffer
 	LocalTemplate *template.Template
+	linenumber    int
+}
+
+func (tmpl *TemplateFileFuncs) LineNumbers() int {
+	return tmpl.linenumber
 }
 
 func (tmpl *TemplateFileFuncs) Start(path string) string {
@@ -108,7 +113,7 @@ func (tmpl *TemplateFileFuncs) End() string {
 		return ""
 	}
 
-	fmt.Println(output.GetBuffer().String())
+	// fmt.Println(output.GetBuffer().String())
 	// Unnecessary:
 	// tmpl.FileBuffers = append(tmpl.FileBuffers, output)
 
@@ -135,8 +140,8 @@ func (tmpl *TemplateFileFuncs) End() string {
 	out, err := cmd.CombinedOutput()
 
 	// TODO: Make LineCounter work again
-	// ln, _ := utils.LineCounter(bytes.NewReader(out))
-	// lines += ln
+	ln, _ := utils.LineCounter(bytes.NewReader(out))
+	tmpl.linenumber += ln
 
 	err = ioutil.WriteFile(output.Path, out, 0644)
 	check(err)
@@ -195,7 +200,7 @@ func New(config string) (*Generator, error) {
 	check(err)
 
 	gopath := os.Getenv("GOPATH")
-	projectpath := gopath + "/src/github.com/granate/"
+	projectpath := gopath + "/src/github.com/granateio/granate/"
 	langpath := projectpath + "language/" + genCfg.Language + "/"
 
 	langConfigFile, err := ioutil.ReadFile(langpath + "config.yaml")
@@ -304,7 +309,7 @@ func (gen *Generator) Generate() {
 
 	tmpl := gen.Template
 	mainTemplates := gen.LangConf.Templates
-	var lines int
+	// var lines int
 
 	var wait sync.WaitGroup
 	var nodes astNodes
@@ -350,7 +355,7 @@ func (gen *Generator) Generate() {
 				}
 				nodes.Definition = append(nodes.Definition, con)
 				connections[contype] = true
-				fmt.Println("Found connections", connection.Name.Value)
+				// fmt.Println("Found connections", connection.Name.Value)
 			}
 		}
 
@@ -366,10 +371,26 @@ func (gen *Generator) Generate() {
 
 	gen.Nodes = nodes
 
+	linecounter := make(chan int)
+	quit := make(chan bool)
+
+	go func(quit chan bool, counter chan int) {
+		sum := 0
+		for {
+			select {
+			case number := <-counter:
+				sum += number
+			case <-quit:
+				fmt.Println("Generated", sum, "lines of code")
+				return
+			}
+		}
+	}(quit, linecounter)
+
 	for _, mainTmpl := range mainTemplates {
 		wait.Add(1)
 
-		go func(mainTmpl string) {
+		go func(mainTmpl string, counter chan int) {
 			defer wait.Done()
 
 			localTemplate, err := tmpl.Clone()
@@ -407,6 +428,9 @@ func (gen *Generator) Generate() {
 				panic(err)
 			}
 
+			// fmt.Println(localFileFuncs.LineNumbers())
+			counter <- localFileFuncs.LineNumbers()
+
 			// var code bytes.Buffer
 			// err := tmpl.ExecuteTemplate(&code, pass.template("Header"), nil)
 			// _ = err
@@ -425,12 +449,14 @@ func (gen *Generator) Generate() {
 			// 	fmt.Println(code.String())
 			// }
 
-		}(mainTmpl)
+		}(mainTmpl, linecounter)
 	}
 
 	wait.Wait()
 
-	fmt.Printf("Generated %d lines of code\n", lines)
+	quit <- true
+
+	// fmt.Printf("Generated %d lines of code\n", lines)
 
 }
 

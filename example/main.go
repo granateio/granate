@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/granate/example/schema"
+	"github.com/granateio/granate/example/schema"
 )
 
 func main() {

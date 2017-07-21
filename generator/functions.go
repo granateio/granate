@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/granate/generator/utils"
+	"github.com/granateio/granate/generator/utils"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/kinds"
 )

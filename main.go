@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/granate/generator"
+	"github.com/granateio/granate/generator"
 	flags "github.com/jessevdk/go-flags"
 )
 

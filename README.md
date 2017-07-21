@@ -8,7 +8,7 @@ specified language (go is currently the only supported language).
 ## Quick start
 ### Install
 ```sh
-go get github.com/noh4ck/granate
+go get github.com/granateio/granate
 ```
 
 ### Usage

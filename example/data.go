@@ -1,6 +1,6 @@
 package main
 
-import "github.com/granate/example/schema"
+import "github.com/granateio/granate/example/schema"
 
 var users = []schema.UserInterface{
 	User{
@@ -16,7 +16,7 @@ var users = []schema.UserInterface{
 	User{
 		Todos: todos,
 		ID:    "3",
-		Name:  "Christion",
+		Name:  "Christian",
 	},
 }
 
