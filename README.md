@@ -26,7 +26,7 @@ schemas:
   - todo.graphql
 ```
 
-A schmea is also required, you can provide multiple schemas in the `schemas`
+A schema is also required, you can provide multiple schemas in the `schemas`
 section of the config file. Here is a simple `todo.graphql` file
 ```graphql
 # A user in the system
@@ -63,8 +63,8 @@ schema/
 
 The `definitions.go` file is where all the graphql specific code is.
 `adapters.go` provides a set of interfaces to use for implementing the logic.
-`provides.go` containes a set of function to bootstrap the graphql schema as
-well as providing a graphiql interface to test youre schema with.
+`provider.go` contains a set of function to bootstrap the graphql schema as
+well as providing a graphiql interface to test your schema with.
 
 For a more in depth overview of how to use `Granate`, check out the simple example under the `example` folder.
 
