@@ -13,7 +13,7 @@ templates:
   - Definitions
   - Adapters
   - Provider
-  # - Boilerplate
+  - Models
 config:
   pkg: "graphql"
   imports: |

@@ -1,3 +1,36 @@
+{{define "Model/ObjectDefinition" -}}
+{{/*type {{.Name | nativetype}} interface{ */}}
+{{range $fields := .Fields -}}
+{{range $desc := . | desc -}}
+// {{.}}
+{{end -}}
+{{- if .Arguments -}}
+// {{.Name.Value}}(
+{{- range $i, $args := .Arguments -}}
+{{if $i}},{{end}} {{ . | body -}}
+{{- end }} )
+{{ end -}}
+{{- if $.Name.Value | root -}}
+func (root Root) {{.Name.Value | public}}{{$.Name.Value}}(
+{{- else -}}
+func ({{$.Name.Value | private}} {{$.Name.Value}}) {{.Name.Value | public}}Field(
+{{- end -}}
+    {{- if .Type | connection -}}
+    args relay.ConnectionArguments
+    {{- else -}}
+    {{- range $i, $args := .Arguments -}}
+    {{if $i}}, {{end}}{{.Name.Value}} {{output.schema}}.{{ .Type | nativetype -}}
+    {{- end -}}
+    {{- end -}}
+    ) ({{output.schema}}.{{.Type | nativetype}}, error) {
+
+    }
+
+{{end}}
+{{/*}*/}}
+
+{{end}}
+
 {{define "Native/ObjectDefinition" -}}
 {{range $i, $desc := . | desc -}}
 {{- if $i | not}}// {{$.Name | nativetype }} {{.}}
@@ -16,7 +49,11 @@ type {{.Name | nativetype}} interface{
     {{if $i}},{{end}} {{ . | body -}}
     {{- end }} )
     {{ end -}}
+    {{- if $.Name.Value | root -}}
+    {{.Name.Value | public}}{{$.Name.Value}}(
+    {{- else -}}
     {{.Name.Value | public}}Field(
+    {{- end -}}
         {{- if .Type | connection -}}
         relay.ConnectionArguments
         {{- else -}}
@@ -107,9 +144,9 @@ var {{ .Name | graphqltype }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
                     {{end}}
                     {{if $.Name.Value | root}}
                         {{ if eq $returnspayload true }}
-                            payload, err := provider.{{$.Name.Value | private}}.{{.Name.Value | public}}Field(
+                            payload, err := provider.{{$.Name.Value | private}}.{{.Name.Value | public}}{{$.Name.Value}}(
                         {{- else -}}
-                            return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}Field(
+                            return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}{{$.Name.Value}}(
                         {{- end -}}
                     {{- else -}}
                         {{ if eq $ispayload true }}
@@ -140,7 +177,7 @@ var {{ .Name | graphqltype }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
             Resolve: func(params {{cfg.pkg}}.ResolveParams) (interface{}, error) {
                 args := relay.NewConnectionArguments(params.Args)
                 {{if $.Name.Value | root}}
-                return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}Field(
+                return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}{{$.Name.Value}}(
                 {{- else -}}
                 {{$.Name.Value}}Source, _ := params.Source.({{$.Name | nativetype}})
                 return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(

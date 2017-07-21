@@ -39,7 +39,7 @@ IDFetcher: func(id string, info {{cfg.pkg}}.ResolveInfo, ctx context.Context) (i
 		switch resolvedID.Type {
 		{{- range $node := $nodes }}
 		case "{{$node.Name.Value}}":
-			return provider.relay.Get{{$node.Name.Value}}(resolvedID.ID)
+			return provider.relay.Resolve{{$node.Name.Value}}Node(resolvedID.ID)
 		{{ end -}}
 		default:
 			return nil, fmt.Errorf("Unknown node type '%s'", resolvedID.Type)

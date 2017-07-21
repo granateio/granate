@@ -7,7 +7,7 @@ package {{output.schema}}
 {{ if (len nodes.Relay) }}
 type RelayInterface interface {
 {{ range $node := nodes.Relay }}
-	Get{{$node.Name.Value}}(string) ({{$node.Name | nativetype}}, error)
+	Resolve{{$node.Name.Value}}Node(string) ({{$node.Name | nativetype}}, error)
 {{ end }}
 }
 {{ end }}

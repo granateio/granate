@@ -3,6 +3,7 @@ package generator
 import (
 	"bytes"
 	"log"
+	"os"
 	"strings"
 	"text/template"
 
@@ -37,12 +38,20 @@ func (gen *Generator) funcMap() template.FuncMap {
 		"suffix": strings.HasSuffix,
 		"prefix": strings.HasPrefix,
 
+		"existfile": fileExists,
 		// Placeholder functions, these functions will be replaced with a local
 		// representation in each go routine for every main template
 		"startfile": func() string { return "" },
 		"endfile":   func() string { return "" },
 		"partial":   func() string { return "" },
 	}
+}
+
+func fileExists(path string) bool {
+	if _, err := os.Stat("./" + path); !os.IsNotExist(err) {
+		return true
+	}
+	return false
 }
 
 func (gen *Generator) getOutput() map[string]string {

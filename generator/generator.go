@@ -108,7 +108,7 @@ func (tmpl *TemplateFileFuncs) End() string {
 		return ""
 	}
 
-	// fmt.Println(output.GetBuffer().String())
+	fmt.Println(output.GetBuffer().String())
 	// Unnecessary:
 	// tmpl.FileBuffers = append(tmpl.FileBuffers, output)
 
@@ -243,6 +243,7 @@ func (gen *Generator) NamedLookup(name string) ast.Node {
 		}
 	}
 
+	log.Fatalf("Type with name '%s' is not defined", name)
 	return nil
 }
 
@@ -274,8 +275,9 @@ func (gen generatorPass) template(name string) string {
 type astNodes struct {
 	Root       []ast.Node
 	Definition []ast.Node
+	Object     []ast.Node
 	Relay      []ast.Node
-	Connection map[string]bool
+	// Connection map[string]bool
 }
 
 type ConnectionDefinition struct {
@@ -306,7 +308,8 @@ func (gen *Generator) Generate() {
 
 	var wait sync.WaitGroup
 	var nodes astNodes
-	nodes.Connection = make(map[string]bool)
+	connections := make(map[string]bool)
+	// nodes.Connection = make(map[string]bool)
 
 	// Gather usefull definitions
 	for _, def := range definitions {
@@ -327,12 +330,15 @@ func (gen *Generator) Generate() {
 			continue
 		}
 
+		nodes.Object = append(nodes.Object, def)
+
 		// Find and add relay connections
 		for _, connection := range objectDef.Fields {
 			conloc := connection.Type.GetLoc()
 			contype := string(conloc.Source.Body[conloc.Start:conloc.End])
 			if strings.HasSuffix(contype, "Connection") {
-				if _, ok := nodes.Connection[contype]; ok == true {
+				// if _, ok := nodes.Connection[contype]; ok == true {
+				if _, ok := connections[contype]; ok == true {
 					continue
 				}
 				con := ConnectionDefinition{
@@ -343,7 +349,7 @@ func (gen *Generator) Generate() {
 					NodeType: NodeByName(gen.Ast.Definitions, strings.TrimSuffix(contype, "Connection")),
 				}
 				nodes.Definition = append(nodes.Definition, con)
-				nodes.Connection[contype] = true
+				connections[contype] = true
 				fmt.Println("Found connections", connection.Name.Value)
 			}
 		}
@@ -359,7 +365,6 @@ func (gen *Generator) Generate() {
 	}
 
 	gen.Nodes = nodes
-	// gen.Nodes.Connection = make(map[string]ast.Node)
 
 	for _, mainTmpl := range mainTemplates {
 		wait.Add(1)
