@@ -139,11 +139,11 @@ func (tmpl *TemplateFileFuncs) End() string {
 
 	out, err := cmd.CombinedOutput()
 
-	// TODO: Make LineCounter work again
 	ln, _ := utils.LineCounter(bytes.NewReader(out))
 	tmpl.linenumber += ln
 
 	err = ioutil.WriteFile(output.Path, out, 0644)
+	// err = ioutil.WriteFile(output.Path, output.GetBuffer().Bytes(), 0644)
 	check(err)
 
 	prevBuffer, ok := tmpl.BufferStack.Pop().(utils.OpaqueBytesBuffer)
@@ -236,20 +236,7 @@ type namedDefinition interface {
 
 // TODO: Find a better name for the NamedLookup function
 func (gen *Generator) NamedLookup(name string) ast.Node {
-	nodes := gen.Nodes.Definition
-
-	for _, node := range nodes {
-		named, ok := node.(namedDefinition)
-		if ok == false {
-			continue
-		}
-		if named.GetName().Value == name {
-			return node
-		}
-	}
-
-	log.Fatalf("Type with name '%s' is not defined", name)
-	return nil
+	return NodeByName(gen.Nodes.Definition, name)
 }
 
 // TODO: Much the same as the NamedLookup function
@@ -282,7 +269,6 @@ type astNodes struct {
 	Definition []ast.Node
 	Object     []ast.Node
 	Relay      []ast.Node
-	// Connection map[string]bool
 }
 
 type ConnectionDefinition struct {
@@ -309,12 +295,10 @@ func (gen *Generator) Generate() {
 
 	tmpl := gen.Template
 	mainTemplates := gen.LangConf.Templates
-	// var lines int
 
 	var wait sync.WaitGroup
 	var nodes astNodes
 	connections := make(map[string]bool)
-	// nodes.Connection = make(map[string]bool)
 
 	// Gather usefull definitions
 	for _, def := range definitions {
@@ -355,7 +339,6 @@ func (gen *Generator) Generate() {
 				}
 				nodes.Definition = append(nodes.Definition, con)
 				connections[contype] = true
-				// fmt.Println("Found connections", connection.Name.Value)
 			}
 		}
 
@@ -363,7 +346,6 @@ func (gen *Generator) Generate() {
 			body := string(iface.Loc.Source.Body)
 			name := body[iface.Loc.Start:iface.Loc.End]
 			if name == "Node" {
-				// Add nodes that implements the Relay Node interface
 				nodes.Relay = append(nodes.Relay, def)
 			}
 		}
@@ -428,26 +410,7 @@ func (gen *Generator) Generate() {
 				panic(err)
 			}
 
-			// fmt.Println(localFileFuncs.LineNumbers())
 			counter <- localFileFuncs.LineNumbers()
-
-			// var code bytes.Buffer
-			// err := tmpl.ExecuteTemplate(&code, pass.template("Header"), nil)
-			// _ = err
-
-			// for _, n := range nodes {
-			// 	err := tmpl.ExecuteTemplate(&code, pass.template(n.GetKind()), n)
-			// 	_ = err
-			// }
-
-			// Code output
-			// filename := gen.Config.Package + "/" + pass.File
-			// fmt.Println(filename)
-
-			// debug := os.Getenv("GRANATE_DEBUG")
-			// if debug == "true" {
-			// 	fmt.Println(code.String())
-			// }
 
 		}(mainTmpl, linecounter)
 	}

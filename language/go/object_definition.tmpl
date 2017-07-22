@@ -18,14 +18,18 @@ func ({{$.Name.Value | private}} {{$.Name.Value}}) {{.Name.Value | public}}Field
     {{- if .Type | connection -}}
     args relay.ConnectionArguments
     {{- else -}}
-    {{- range $i, $args := .Arguments -}}
-    {{if $i}}, {{end}}{{.Name.Value}} {{output.schema}}.{{ .Type | nativetype -}}
+        {{- range $i, $args := .Arguments -}}
+            {{if $i}}, {{end}}{{.Name.Value}} {{nativetypepkg .Type output.schema -}}
+        {{- end -}}
     {{- end -}}
-    {{- end -}}
-    ) ({{output.schema}}.{{.Type | nativetype}}, error) {
+    ) (
+    {{- if .Type | connection -}}
+    *relay.Connection
+    {{- else -}}
+    {{nativetypepkg .Type output.schema}}
+    {{- end -}}, error) {
 
     }
-
 {{end}}
 {{/*}*/}}
 

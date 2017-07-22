@@ -4,14 +4,22 @@
 {{ startfile $filename }}
 package {{output.models}}
 {{ range $i, $root := nodes.Root }}
-var _ {{output.schema}}.{{$root.Name | nativetype}} = (*Root)(nil)
+    var _ {{ nativetypepkg $root.Name output.schema }} = (*Root)(nil)
+{{ end }}
+{{ if (len nodes.Relay) }}
+    var _ {{output.schema}}.RelayInterface = (*Root)(nil)
 {{ end }}
 type Root struct {
 
 }
 
 {{ range $i, $root := nodes.Root }}
-{{ partial "Model/ObjectDefinition" $root }}
+    {{ partial "Model/ObjectDefinition" $root }}
+{{ end }}
+{{ range $relay := nodes.Relay }}
+func (root Root) Resolve{{$relay.Name.Value}}Node(id string) ({{ nativetypepkg $relay.Name output.schema }}, error) {
+
+}
 {{ end }}
 {{ endfile }}
 {{ end }}
@@ -23,7 +31,7 @@ type Root struct {
 {{- startfile $filename }}
 
 package {{output.models}}
-var _ {{output.schema}}.{{$definition.Name | nativetype}} = (*{{$definition.Name.Value}})(nil)
+var _ {{nativetypepkg $definition.Name output.schema }} = (*{{$definition.Name.Value}})(nil)
 type {{$definition.Name.Value}} struct {
 
 }

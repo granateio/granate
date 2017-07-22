@@ -11,7 +11,7 @@
 {{- end}}
 
 {{define "NativeNonNull" -}}
-{{ .Type | nativetype}}
+{{nativetypepkg .Type .Package}}
 {{- end}}
 
 {{define "GraphqlList" -}}
@@ -19,5 +19,5 @@
 {{- end}}
 
 {{define "NativeList" -}}
-[]{{ .Type | nativetype}}
+[]{{nativetypepkg .Type .Package}}
 {{- end}}

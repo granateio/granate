@@ -15,13 +15,14 @@ import (
 
 func (gen *Generator) funcMap() template.FuncMap {
 	return template.FuncMap{
-		"cfg":         gen.getConfig,
-		"graphqltype": gen.graphqltype,
-		"nativetype":  gen.nativetype,
-		"nodes":       gen.getNodes,
-		"output":      gen.getOutput,
-		"root":        gen.isRootField,
-		"namedtype":   gen.getNamedType,
+		"cfg":           gen.getConfig,
+		"graphqltype":   gen.graphqltype,
+		"nativetype":    gen.nativetype,
+		"nativetypepkg": gen.nativetypepkg,
+		"nodes":         gen.getNodes,
+		"output":        gen.getOutput,
+		"root":          gen.isRootField,
+		"namedtype":     gen.getNamedType,
 
 		// Move to utils package?
 		"body":         getBody,
@@ -150,23 +151,27 @@ func getDescription(n ast.Node) []string {
 	return utils.GetCommentBlock(n.GetLoc().Source.Body, n.GetLoc().Start)
 }
 
+func (gen *Generator) nativetypepkg(def interface{}, pkg string) string {
+	return gen.def2Type(typeNative, def, pkg)
+}
+
 func (gen *Generator) nativetype(def interface{}) string {
-	return gen.def2Type(typeNative, def)
+	return gen.def2Type(typeNative, def, "")
 }
 
 func (gen *Generator) graphqltype(def interface{}) string {
-	return gen.def2Type(typeGraphql, def)
+	return gen.def2Type(typeGraphql, def, "")
 }
 
-func (gen *Generator) def2Type(set typeSet, def interface{}) string {
+func (gen *Generator) def2Type(set typeSet, def interface{}, pkg string) string {
 	switch t := def.(type) {
 	case *ast.Name:
 		return gen.getType(set, &ast.Named{
 			Kind: kinds.Named,
 			Loc:  t.GetLoc(),
-		})
+		}, pkg)
 	case ast.Type:
-		return gen.getType(set, t)
+		return gen.getType(set, t, pkg)
 	}
 	spew.Dump(def)
 
@@ -205,7 +210,7 @@ func (gen *Generator) getNamedType(t ast.Type) string {
 }
 
 // TODO: Refactor/improve this method
-func (gen *Generator) getType(typeset typeSet, t ast.Type) string {
+func (gen *Generator) getType(typeset typeSet, t ast.Type, pkg string) string {
 	set := string(typeset)
 	switch v := t.(type) {
 	case *ast.Named:
@@ -225,10 +230,14 @@ func (gen *Generator) getType(typeset typeSet, t ast.Type) string {
 			return output.String()
 		}
 
+		pkgprefix := ""
+		if pkg != "" {
+			pkgprefix = pkg + "."
+		}
 		gen.Template.ExecuteTemplate(&output,
 			set+gen.NamedLookup(name).GetKind(),
 			map[string]string{
-				"Name": name,
+				"Name": pkgprefix + name,
 			},
 		)
 
@@ -242,8 +251,9 @@ func (gen *Generator) getType(typeset typeSet, t ast.Type) string {
 		newLoc.End--
 		innerType := utils.ParseType(val, newLoc)
 
-		gen.Template.ExecuteTemplate(&output, set+"NonNull", map[string]ast.Type{
-			"Type": innerType,
+		gen.Template.ExecuteTemplate(&output, set+"NonNull", map[string]interface{}{
+			"Type":    innerType,
+			"Package": pkg,
 		})
 		return output.String()
 	case *ast.List:
@@ -257,8 +267,9 @@ func (gen *Generator) getType(typeset typeSet, t ast.Type) string {
 
 		newType := utils.ParseType(val, newLoc)
 
-		gen.Template.ExecuteTemplate(&output, set+"List", map[string]ast.Type{
-			"Type": newType,
+		gen.Template.ExecuteTemplate(&output, set+"List", map[string]interface{}{
+			"Type":    newType,
+			"Package": pkg,
 		})
 
 		return output.String()
