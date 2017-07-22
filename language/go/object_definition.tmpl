@@ -15,13 +15,13 @@ func (root Root) {{.Name.Value | public}}{{$.Name.Value}}(
 {{- else -}}
 func ({{$.Name.Value | private}} {{$.Name.Value}}) {{.Name.Value | public}}Field(
 {{- end -}}
-    {{- if .Type | connection -}}
-    args relay.ConnectionArguments
+    {{- if .Type | connection }}
+    args relay.ConnectionArguments,
     {{- else -}}
         {{- range $i, $args := .Arguments -}}
-            {{if $i}}, {{end}}{{.Name.Value}} {{nativetypepkg .Type output.schema -}}
+            {{.Name.Value}} {{nativetypepkg .Type output.schema}},
         {{- end -}}
-    {{- end -}}
+    {{- end }}
     ) (
     {{- if .Type | connection -}}
     *relay.Connection
