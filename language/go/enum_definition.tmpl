@@ -29,5 +29,5 @@ var {{ .Name | graphqltype}} = {{cfg.pkg}}.NewEnum({{cfg.pkg}}.EnumConfig{
 {{- end}}
 
 {{define "NativeEnumDefinition" -}}
-{{/*{{ .Name }}*/}}int
+{{/*{{ .Name }}*/}}*int
 {{- end}}

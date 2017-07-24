@@ -12,26 +12,26 @@
 {{ end -}}
 {{- if $.Name.Value | root -}}
 func (root Root) {{.Name.Value | public}}{{$.Name.Value}}(
-{{- else -}}
+ctx context.Context,
+{{ else -}}
 func ({{$.Name.Value | private}} {{$.Name.Value}}) {{.Name.Value | public}}Field(
-{{- end -}}
-    {{- if .Type | connection }}
+{{ end -}}
+    {{- if .Type | connection -}}
     args relay.ConnectionArguments,
-    {{- else -}}
+    {{ else -}}
         {{- range $i, $args := .Arguments -}}
             {{.Name.Value}} {{nativetypepkg .Type output.schema}},
-        {{- end -}}
-    {{- end }}
+        {{ end -}}
+    {{- end -}}
     ) (
     {{- if .Type | connection -}}
     *relay.Connection
     {{- else -}}
-    {{nativetypepkg .Type output.schema}}
+    {{nativetypepkg .Type (print "*" output.schema)}}
     {{- end -}}, error) {
-
+        return nil, nil
     }
 {{end}}
-{{/*}*/}}
 
 {{end}}
 
@@ -54,18 +54,22 @@ type {{.Name | nativetype}} interface{
     {{- end }} )
     {{ end -}}
     {{- if $.Name.Value | root -}}
-    {{.Name.Value | public}}{{$.Name.Value}}(
+    {{.Name.Value | public}}{{$.Name.Value}}(context.Context
+    {{- if .Arguments | len -}},{{end}}
     {{- else -}}
     {{.Name.Value | public}}Field(
     {{- end -}}
         {{- if .Type | connection -}}
+        {{- if $.Name.Value | root -}}
+        , 
+        {{- end -}}
         relay.ConnectionArguments
         {{- else -}}
         {{- range $i, $args := .Arguments -}}
         {{if $i}}, {{end}}{{- .Type | nativetype -}}
         {{- end -}}
         {{- end -}}
-    ) ({{.Type | nativetype}}, error)
+    ) ({{nativetypepkg .Type "*"}}, error)
 
     {{end}}
 }
@@ -103,16 +107,16 @@ var {{ .Name | graphqltype }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
     {{ end }}
     {{ if .Name.Value | relaypayload }}
     {{ $definition }}.AddFieldConfig("clientMutationId",
-		&graphql.Field{
-			Type: graphql.String,
+        &graphql.Field{
+            Type: graphql.String,
 
-			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-				source := params.Source.(map[string]interface{})
-				id := source["clientMutationId"].(string)
-				return id, nil
-			},
-		},
-	)
+            Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+                source := params.Source.(map[string]interface{})
+                id := source["clientMutationId"].(string)
+                return id, nil
+            },
+        },
+    )
     {{ end }}
     {{with $fd := .Fields -}}
     {{ range $fd }}
@@ -152,6 +156,7 @@ var {{ .Name | graphqltype }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
                         {{- else -}}
                             return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}{{$.Name.Value}}(
                         {{- end -}}
+                        params.Context{{if .Arguments | len}}, {{ end }} 
                     {{- else -}}
                         {{ if eq $ispayload true }}
                         source := params.Source.(map[string]interface{})
@@ -185,7 +190,11 @@ var {{ .Name | graphqltype }} = {{cfg.pkg}}.NewObject({{cfg.pkg}}.ObjectConfig{
                 {{- else -}}
                 {{$.Name.Value}}Source, _ := params.Source.({{$.Name | nativetype}})
                 return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(
-                {{- end}} args)
+                {{- end -}}
+                {{- if $.Name.Value | root -}}
+                params.Context,
+                {{- end -}}
+                args)
 
             },
             {{ end }}{{/* end if connection */}}

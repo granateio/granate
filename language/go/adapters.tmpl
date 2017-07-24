@@ -1,13 +1,14 @@
 {{ define "Adapters" }}
 {{- startfile (print output.schema "/adapters.go") }}
 package {{output.schema}}
+import "golang.org/x/net/context"
 {{ range $i, $definition := nodes.Definition }}
 {{ partial (print "Native/" (kind $definition)) $definition }}
 {{ end }}
 {{ if (len nodes.Relay) }}
 type RelayInterface interface {
 {{ range $node := nodes.Relay }}
-	Resolve{{$node.Name.Value}}Node(string) ({{$node.Name | nativetype}}, error)
+	Resolve{{$node.Name.Value}}Node(context.Context, string) ({{$node.Name | nativetype}}, error)
 {{ end }}
 }
 {{ end }}

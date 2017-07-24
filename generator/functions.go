@@ -163,7 +163,7 @@ func (gen *Generator) graphqltype(def interface{}) string {
 	return gen.def2Type(typeGraphql, def, "")
 }
 
-func (gen *Generator) def2Type(set typeSet, def interface{}, pkg string) string {
+func (gen *Generator) def2Type(set typeClass, def interface{}, pkg string) string {
 	switch t := def.(type) {
 	case *ast.Name:
 		return gen.getType(set, &ast.Named{
@@ -180,11 +180,11 @@ func (gen *Generator) def2Type(set typeSet, def interface{}, pkg string) string 
 	return ""
 }
 
-type typeSet string
+type typeClass string
 
 const (
-	typeNative  typeSet = "Native"
-	typeGraphql typeSet = "Graphql"
+	typeNative  typeClass = "Native"
+	typeGraphql typeClass = "Graphql"
 )
 
 func (gen *Generator) getNamedType(t ast.Type) string {
@@ -210,8 +210,8 @@ func (gen *Generator) getNamedType(t ast.Type) string {
 }
 
 // TODO: Refactor/improve this method
-func (gen *Generator) getType(typeset typeSet, t ast.Type, pkg string) string {
-	set := string(typeset)
+func (gen *Generator) getType(typeclass typeClass, t ast.Type, pkg string) string {
+	class := string(typeclass)
 	switch v := t.(type) {
 	case *ast.Named:
 		var output bytes.Buffer
@@ -220,12 +220,17 @@ func (gen *Generator) getType(typeset typeSet, t ast.Type, pkg string) string {
 
 		namedType, ok := gen.LangConf.Language.Scalars[name]
 
+		starprefix := ""
+		if strings.HasPrefix(pkg, "*") {
+			starprefix = "*"
+			pkg = strings.TrimPrefix(pkg, "*")
+		}
 		if ok == true {
-			if set == string(typeGraphql) {
+			if class == string(typeGraphql) {
 				namedType = name
 			}
-			gen.Template.ExecuteTemplate(&output, set+"Named", map[string]string{
-				"Name": namedType,
+			gen.Template.ExecuteTemplate(&output, class+"Named", map[string]string{
+				"Name": starprefix + namedType,
 			})
 			return output.String()
 		}
@@ -235,7 +240,7 @@ func (gen *Generator) getType(typeset typeSet, t ast.Type, pkg string) string {
 			pkgprefix = pkg + "."
 		}
 		gen.Template.ExecuteTemplate(&output,
-			set+gen.NamedLookup(name).GetKind(),
+			class+gen.NamedLookup(name).GetKind(),
 			map[string]string{
 				"Name": pkgprefix + name,
 			},
@@ -251,7 +256,7 @@ func (gen *Generator) getType(typeset typeSet, t ast.Type, pkg string) string {
 		newLoc.End--
 		innerType := utils.ParseType(val, newLoc)
 
-		gen.Template.ExecuteTemplate(&output, set+"NonNull", map[string]interface{}{
+		gen.Template.ExecuteTemplate(&output, class+"NonNull", map[string]interface{}{
 			"Type":    innerType,
 			"Package": pkg,
 		})
@@ -267,7 +272,7 @@ func (gen *Generator) getType(typeset typeSet, t ast.Type, pkg string) string {
 
 		newType := utils.ParseType(val, newLoc)
 
-		gen.Template.ExecuteTemplate(&output, set+"List", map[string]interface{}{
+		gen.Template.ExecuteTemplate(&output, class+"List", map[string]interface{}{
 			"Type":    newType,
 			"Package": pkg,
 		})

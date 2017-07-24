@@ -3,6 +3,10 @@
 {{ if not (existfile $filename) }}
 {{ startfile $filename }}
 package {{output.models}}
+import (
+    "{{output.package}}/{{output.schema}}"
+    "golang.org/x/net/context"
+)
 {{ range $i, $root := nodes.Root }}
     var _ {{ nativetypepkg $root.Name output.schema }} = (*Root)(nil)
 {{ end }}
@@ -17,8 +21,8 @@ type Root struct {
     {{ partial "Model/ObjectDefinition" $root }}
 {{ end }}
 {{ range $relay := nodes.Relay }}
-func (root Root) Resolve{{$relay.Name.Value}}Node(id string) ({{ nativetypepkg $relay.Name output.schema }}, error) {
-
+func (root Root) Resolve{{$relay.Name.Value}}Node(ctx context.Context, id string) ({{ nativetypepkg $relay.Name output.schema }}, error) {
+    return nil, nil
 }
 {{ end }}
 {{ endfile }}
@@ -31,6 +35,8 @@ func (root Root) Resolve{{$relay.Name.Value}}Node(id string) ({{ nativetypepkg $
 {{- startfile $filename }}
 
 package {{output.models}}
+import "{{output.package}}/{{output.schema}}"
+
 var _ {{nativetypepkg $definition.Name output.schema }} = (*{{$definition.Name.Value}})(nil)
 type {{$definition.Name.Value}} struct {
 
