@@ -171,10 +171,13 @@ lib.AddFieldConfigMap({{.Name | graphqltype}}, graphql.Fields{
                         if err != nil {
                             return nil, err
                         }
-                        id := params.Args["input"].(map[string]interface{})["clientMutationId"]
+
+                        var id lib.ClientMutationID
+                        mapstructure.Decode(params.Args["input"], &id)
+
                         return lib.MutationPayload{
                             Payload:          payload,
-                            ClientMutationID: id.(string),
+                            ClientMutationID: id.ClientMutationId,
                         }, nil
                     {{ end }}
 

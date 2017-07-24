@@ -25,6 +25,10 @@ type MutationPayload struct {
 	Payload          interface{}
 }
 
+type ClientMutationID struct {
+	ClientMutationId string
+}
+
 func AddFieldConfigMap(obj *graphql.Object, fields graphql.Fields) {
 	for name, field := range fields {
 		obj.AddFieldConfig(name, field)
