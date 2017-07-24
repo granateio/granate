@@ -158,7 +158,10 @@ lib.AddFieldConfigMap({{.Name | graphqltype}}, graphql.Fields{
                     {{- else -}}
                         {{ if eq $ispayload true }}
                         source := params.Source.(lib.MutationPayload)
-                        {{$.Name.Value}}Source, _ := source.Payload.({{$.Name | nativetype}})
+                        {{$.Name.Value}}Source, ok := source.Payload.({{$.Name | nativetype}})
+                        if ok == false {
+                            return nil, nil
+                        }
                         {{ else }}
                         {{$.Name.Value}}Source, _ := params.Source.({{$.Name | nativetype}})
                         {{ end }}
