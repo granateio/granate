@@ -333,8 +333,9 @@ func (gen *Generator) Generate() {
 				con := ConnectionDefinition{
 					Name: ast.NewName(&ast.Name{
 						Value: contype,
+						Loc:   conloc,
 					}),
-					Loc:      connection.Loc,
+					Loc:      conloc,
 					NodeType: NodeByName(gen.Ast.Definitions, strings.TrimSuffix(contype, "Connection")),
 				}
 				nodes.Definition = append(nodes.Definition, con)

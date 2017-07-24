@@ -7,7 +7,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/granateio/granate/generator/utils"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/kinds"
@@ -173,10 +172,9 @@ func (gen *Generator) def2Type(set typeClass, def interface{}, pkg string) strin
 	case ast.Type:
 		return gen.getType(set, t, pkg)
 	}
-	spew.Dump(def)
 
 	// TODO: Improve error message
-	log.Panicf("Unsupported type %v", def)
+	log.Fatalf("Unsupported type %v", def)
 	return ""
 }
 
