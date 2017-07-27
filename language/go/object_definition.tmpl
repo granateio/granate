@@ -17,6 +17,9 @@ ctx context.Context,
 func ({{$.Name.Value | private}} {{$.Name.Value}}) {{.Name.Value | public}}Field(
 {{ end -}}
     {{- if .Type | connection -}}
+    {{- if not ($.Name.Value | root) -}}
+    ctx context.Context,
+    {{ end }}
     args relay.ConnectionArguments,
     {{ else -}}
         {{- range $i, $args := .Arguments -}}
@@ -63,7 +66,7 @@ type {{.Name | nativetype}} interface{
         {{- if $.Name.Value | root -}}
         , 
         {{- end -}}
-        relay.ConnectionArguments
+        {{if not ($.Name.Value | root)}}context.Context,{{end}} relay.ConnectionArguments
         {{- else -}}
         {{- range $i, $args := .Arguments -}}
         {{if $i}}, {{end}}{{- .Type | nativetype -}}
@@ -195,10 +198,9 @@ lib.AddFieldConfigMap({{.Name | graphqltype}}, graphql.Fields{
                 {{$.Name.Value}}Source, _ := params.Source.({{$.Name | nativetype}})
                 return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(
                 {{- end -}}
-                {{- if $.Name.Value | root -}}
-                params.Context,
-                {{- end -}}
-                args)
+                {{/*- if $.Name.Value | root -*/}}
+                params.Context, args)
+                {{/*- end -*/}}
 
             },
             {{ end }}{{/* end if connection */}}
