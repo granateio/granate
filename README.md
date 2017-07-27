@@ -80,3 +80,33 @@ well as providing a graphiql interface to test your schema with.
 
 For a more in depth overview of how to use `Granate`, check out the simple example under the `example` folder.
 
+## Unsupported features
+
+We support most graphql features. These are examples of things you can't yet
+generate with granate.
+
+```graphql
+# Define interfaces (the only interface you can use for now is Node, which exists)
+interface Entity {
+    id: ID!
+    name: String
+}
+
+# Define scalars
+scalar URL
+
+# Define unions
+union Animal = Dog | Snake
+
+# Define schemas
+# You shouldn't need to do this
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: ...
+}
+```
+
+See the [GraphQL
+cheat sheet](https://wehavefaces.net/graphql-shorthand-notation-cheatsheet-17cd715861b6)
+for reference.
