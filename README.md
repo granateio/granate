@@ -15,15 +15,23 @@ go get github.com/granateio/granate
 `Granate` requires a config yaml file `granate.yaml` to provide some basic
 information about the project.
 ```yaml
-# Programming language to output
+# Select language to output
 language: go
 
-# Name of the package to generate
-package: schema
+# Output locations (and some options)
+output:
+  # Name of the package
+  package: change.me/your/package-name/
+
+  # Name of the package to generate for the schema
+  schema: schema
+
+  # Name of the package to generate for the models
+  models: models
 
 # Schemas to use for the code generator
 schemas:
-  - todo.graphql
+  - schema.graphql
 ```
 
 A schema is also required, you can provide multiple schemas in the `schemas`
