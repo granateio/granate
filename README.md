@@ -1,6 +1,6 @@
 # !WORK IN PROGRESS!
 
-# Granate - Code generator for graphql 
+# Granate - Code generator for graphql
 `Granate` is a tool meant to speed up development of applications that utilises
 graphql. `Granate` takes a graphql `schema` and outputs code based on the
 specified language.
@@ -24,8 +24,12 @@ language: go
 
 # Output locations (and some options)
 output:
+  # Output target directory (value can be empty,
+  # but the option is currently required)
+  target: <target-dir>
+
   # Name of the package
-  package: change.me/your/package-name/
+  package: change.me/your/package-name/<target-dir>
 
   # Name of the package to generate for the schema
   schema: schema

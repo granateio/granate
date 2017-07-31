@@ -1,5 +1,5 @@
 {{ define "Models" }}
-{{ $filename := (print output.models "/root.go") }}
+{{ $filename := (print output.target output.models "/root.go") }}
 {{ if not (existfile $filename) }}
 {{ startfile $filename }}
 package {{output.models}}
@@ -29,7 +29,7 @@ func (root Root) Resolve{{$relay.Name.Value}}Node(ctx context.Context, id string
 {{ end }}
 
 {{ range $i, $definition := nodes.Object }}
-{{ $filename := (print output.models "/" ($definition.Name.Value | private) ".go") }}
+{{ $filename := (print output.target output.models "/" ($definition.Name.Value | private) ".go") }}
 {{ if not (existfile $filename) }}
 {{ if not ($definition.Name.Value | root)}}
 {{- startfile $filename }}

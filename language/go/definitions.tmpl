@@ -1,5 +1,5 @@
 {{ define "Definitions" }}
-{{- startfile (print output.schema "/definitions.go") }}
+{{- startfile (print output.target output.schema "/definitions.go") }}
 package {{output.schema}}
 
 import (

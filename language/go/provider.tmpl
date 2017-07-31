@@ -1,5 +1,5 @@
 {{define "Provider"}}
-{{ startfile (print output.schema "/provider.go") }}
+{{ startfile (print output.target output.schema "/provider.go") }}
 package {{output.schema}}
 
 import (
