@@ -12,22 +12,18 @@
 {{ end -}}
 {{- if $.Name.Value | root -}}
 func (root Root) {{.Name.Value | public}}{{$.Name.Value}}(
-ctx context.Context,
 {{ else -}}
 func ({{$.Name.Value | private}} {{$.Name.Value}}) {{.Name.Value | public}}Field(
 {{ end -}}
-    {{- if .Type | connection -}}
-    {{- if not ($.Name.Value | root) -}}
     ctx context.Context,
-    {{ end }}
+    {{- if .Type | connection }}
     args relay.ConnectionArguments,
-    {{ else -}}
-        {{- range $i, $args := .Arguments -}}
+    {{- else -}}
+        {{- range $i, $args := .Arguments }}
             {{.Name.Value}} {{nativetypepkg .Type output.schema}},
-        {{ end -}}
-    {{- end -}}
-    ) (
-    {{- if .Type | connection -}}
+        {{- end -}}
+    {{- end }}
+    ) ({{- if .Type | connection -}}
     *relay.Connection
     {{- else -}}
     {{nativetypepkg .Type (print "*" output.schema)}}
@@ -57,16 +53,13 @@ type {{.Name | nativetype}} interface{
     {{- end }} )
     {{ end -}}
     {{- if $.Name.Value | root -}}
-    {{.Name.Value | public}}{{$.Name.Value}}(context.Context
-    {{- if .Arguments | len -}},{{end}}
+    {{.Name.Value | public}}{{$.Name.Value}}(
     {{- else -}}
     {{.Name.Value | public}}Field(
     {{- end -}}
+        context.Context,
         {{- if .Type | connection -}}
-        {{- if $.Name.Value | root -}}
-        , 
-        {{- end -}}
-        {{if not ($.Name.Value | root)}}context.Context,{{end}} relay.ConnectionArguments
+        relay.ConnectionArguments
         {{- else -}}
         {{- range $i, $args := .Arguments -}}
         {{if $i}}, {{end}}{{- .Type | nativetype -}}
@@ -157,7 +150,7 @@ lib.AddFieldConfigMap({{.Name | graphqltype}}, graphql.Fields{
                         {{- else -}}
                             return provider.{{$.Name.Value | private}}.{{.Name.Value | public}}{{$.Name.Value}}(
                         {{- end -}}
-                        params.Context{{if .Arguments | len}}, {{ end }} 
+                        params.Context{{if .Arguments | len}}, {{ end }}
                     {{- else -}}
                         {{ if eq $ispayload true }}
                         source := params.Source.(lib.MutationPayload)
@@ -169,10 +162,12 @@ lib.AddFieldConfigMap({{.Name | graphqltype}}, graphql.Fields{
                         {{$.Name.Value}}Source, _ := params.Source.({{$.Name | nativetype}})
                         {{ end }}
                         return {{$.Name.Value}}Source.{{.Name.Value | public}}Field(
-                    {{- end}}
-                    {{- range $i, $args := .Arguments -}}
-                        {{if $i}}, {{end}}{{.Name.Value}}Arg
-                    {{- end -}})
+                            params.Context,
+                            {{ end}}
+                            {{- range $i, $args := .Arguments -}}
+                                {{if $i}}, {{end}}{{.Name.Value}}Arg
+                            {{- end -}}
+                        )
                     {{ if eq $returnspayload true }}
                         if err != nil {
                             return nil, err
@@ -188,7 +183,7 @@ lib.AddFieldConfigMap({{.Name | graphqltype}}, graphql.Fields{
                     {{ end }}
 
             },
-            {{ else }}{{/* else not connection */}} 
+            {{ else }}{{/* else not connection */}}
             Args: relay.ConnectionArgs,
             Resolve: func(params {{cfg.pkg}}.ResolveParams) (interface{}, error) {
                 args := relay.NewConnectionArguments(params.Args)

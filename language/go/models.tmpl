@@ -35,7 +35,10 @@ func (root Root) Resolve{{$relay.Name.Value}}Node(ctx context.Context, id string
 {{- startfile $filename }}
 
 package {{output.models}}
-import "{{output.package}}/{{output.schema}}"
+import (
+    "{{output.package}}/{{output.schema}}"
+    "golang.org/x/net/context"
+)
 
 var _ {{nativetypepkg $definition.Name output.schema }} = (*{{$definition.Name.Value}})(nil)
 type {{$definition.Name.Value}} struct {
