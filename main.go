@@ -7,26 +7,11 @@ import (
 	flags "github.com/jessevdk/go-flags"
 )
 
-// GenOpts Code generator options
-type GenOpts struct {
-	Config flags.Filename `short:"c" long:"config" description:"Path to graphql.yaml file"`
-
-	Package string `short:"p" long:"package" description:"Name of the package to generate"`
-
-	Tests bool `short:"t" long:"tests" description:"Generate tests"`
+// Flags Code generator options
+type Flags struct {
+	Config string `short:"c" long:"config" description:"Path to <config>.yaml file"`
+	Help   bool   `short:"h" long:"help" description:"Show available options"`
 }
-
-// BoilerOpts Boilerplate options
-type BoilerOpts struct {
-	Force bool `short:"f" long:"force" description:"Force overwrite of existing files"`
-}
-
-// TODO: Add '@deprecated( reason: "reason" )' anotation support
-
-// func printSource(loc *ast.Location) {
-// 	str := loc.Source.Body[loc.Start:loc.End]
-// 	fmt.Println(string(str))
-// }
 
 func check(e error) {
 	if e != nil {
@@ -35,33 +20,21 @@ func check(e error) {
 }
 
 func main() {
-	// genopts := GenOpts{
-	// 	Config:  "graphql.yaml",
-	// 	Package: "schema",
-	// 	Tests:   false,
-	// }
-	// parser := flags.NewParser(&genopts, flags.Default)
-	// boileropts := BoilerOpts{}
-	// parser.AddCommand("boiler", "Creates boiler plate files",
-	// 	"The boiler command creates boiler plate files, use -f to overwrite existing files",
-	// 	&boileropts)
-	// out, _ := parser.Parse()
-	// fmt.Println(len(out), out)
-	// if len(out) == 0 {
-	// 	parser.WriteHelp(os.Stdout)
-	// }
-
-	// parser.WriteHelp(os.Stdout)
-	// flags.Parse(&opt)
-	// spew.Dump(opt)
-
-	// TODO: Add program paramaters/flags and stuff
-	file := "granate.yaml"
-
-	if len(os.Args) > 1 {
-		file = os.Args[1]
-		// log.Fatal("Not enought arguments")
+	params := Flags{
+		Config: "granate.yaml",
+		Help:   false,
 	}
+
+	parser := flags.NewParser(&params, flags.Default^flags.HelpFlag)
+	_, err := parser.Parse()
+	check(err)
+
+	if params.Help == true {
+		parser.WriteHelp(os.Stdout)
+		return
+	}
+
+	file := params.Config
 
 	gen, _ := generator.New(file)
 	gen.Generate()
