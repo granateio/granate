@@ -130,8 +130,6 @@ func (tmpl *TemplateFileFuncs) End() string {
 	stdin, err := cmd.StdinPipe()
 	check(err)
 
-	// fmt.Println(output.GetBuffer().String())
-
 	go func() {
 		defer stdin.Close()
 		io.WriteString(stdin, output.GetBuffer().String())
@@ -144,6 +142,7 @@ func (tmpl *TemplateFileFuncs) End() string {
 
 	err = ioutil.WriteFile(output.Path, out, 0644)
 	// err = ioutil.WriteFile(output.Path, output.GetBuffer().Bytes(), 0644)
+
 	check(err)
 
 	prevBuffer, ok := tmpl.BufferStack.Pop().(utils.OpaqueBytesBuffer)
@@ -170,11 +169,17 @@ func (lang LanguageConfig) IsRoot(val string) bool {
 func New(config string) (*Generator, error) {
 
 	confFile, err := ioutil.ReadFile(config)
-	check(err)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	genCfg := ProjectConfig{}
 	err = yaml.Unmarshal(confFile, &genCfg)
-	check(err)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	// Combine all .graphql files into one schema
 	var schema bytes.Buffer
