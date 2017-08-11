@@ -12,6 +12,10 @@ specified language.
 ## Quick start
 ### Install
 ```sh
+# A dependency
+go get golang.org/x/tools/cmd/goimports
+
+# The granate package
 go get github.com/granateio/granate
 ```
 

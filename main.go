@@ -5,6 +5,11 @@ import (
 
 	"github.com/granateio/granate/generator"
 	flags "github.com/jessevdk/go-flags"
+
+	// These are imported for convenience so that users don't have to install
+	// them manually
+	_ "github.com/graphql-go/relay"
+	_ "github.com/mitchellh/mapstructure"
 )
 
 // Flags Code generator options
