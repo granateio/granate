@@ -1,7 +1,7 @@
 {{ define "Adapters" }}
 {{- startfile (print output.target output.schema "/adapters.go") }}
 package {{output.schema}}
-import "golang.org/x/net/context"
+import "context"
 {{ range $i, $definition := nodes.Definition }}
 {{ partial (print "Native/" (kind $definition)) $definition }}
 {{ end }}

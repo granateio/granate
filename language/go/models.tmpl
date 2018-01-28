@@ -5,7 +5,7 @@
 package {{output.models}}
 import (
     "{{output.package}}/{{output.schema}}"
-    "golang.org/x/net/context"
+    "context"
 )
 {{ range $i, $root := nodes.Root }}
     var _ {{ nativetypepkg $root.Name output.schema }} = (*Root)(nil)
@@ -37,7 +37,7 @@ func (root Root) Resolve{{$relay.Name.Value}}Node(ctx context.Context, id string
 package {{output.models}}
 import (
     "{{output.package}}/{{output.schema}}"
-    "golang.org/x/net/context"
+    "context"
 )
 
 var _ {{nativetypepkg $definition.Name output.schema }} = (*{{$definition.Name.Value}})(nil)
