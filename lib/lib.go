@@ -2,9 +2,9 @@ package lib
 
 import (
 	"errors"
+	"context"
 
 	"github.com/graphql-go/graphql"
-	"golang.org/x/net/context"
 )
 
 type IDFieldInterface interface {
